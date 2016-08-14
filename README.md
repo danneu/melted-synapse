@@ -2,9 +2,10 @@
 
 # melted-synapse
 
+- Live Demo: <https://www.danneu.com/melted-synapse/>
 
-The start of a turn-based game written in Elm that explores some game mechanics
-I find interesting in [Frozen Synapse](http://www.frozensynapse.com/),
+The start of a turn-based vaporware game written in Elm that explores some game
+mechanics I find interesting in [Frozen Synapse](http://www.frozensynapse.com/),
 like its tactical waypoint system and simultaneous turn resolution.
 
 ![screenshot](https://dl.dropboxusercontent.com/spa/quq37nq1583x0lf/75nykunj.png)
