@@ -306,7 +306,10 @@ update msg model =
           if KE.isPressed KE.BackSpace kbModel' then
             case model.selection of
               ChampSelected champ ->
-                RemoveWaypoint champ
+                if List.isEmpty champ.waypoints then
+                  ClearSelection
+                else
+                  RemoveWaypoint champ
               WaypointSelected champ _ ->
                 RemoveWaypoint champ
               _ ->
