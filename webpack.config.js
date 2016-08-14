@@ -60,7 +60,7 @@ if (TARGET_ENV === 'development') {
           loader: 'elm-hot!elm-webpack?verbose=true&warn=true'
         },
         {
-          test: /\.(css|scss)$/, 
+          test: /\.(css|scss)$/,
           loaders: ['style', 'css', 'postcss', 'sass']
         }
       ]
@@ -95,12 +95,15 @@ if (TARGET_ENV === 'production') {
       new CopyWebpackPlugin([
         {
           from: 'static/img/',
-          to: 'img/'
+          to: 'img/',
+          ignore: ['pxm/*']
         },
-        {
-          from: 'static/favicon.ico'
-        },
-      ]),
+        { from: 'static/favicon.ico' },
+      ], {
+        ignore: [
+          '.DS_Store'
+        ]
+      }),
       new webpack.optimize.OccurenceOrderPlugin(),
       // extract CSS into a separate file
       new ExtractTextPlugin( './[hash].css', { allChunks: true } ),
