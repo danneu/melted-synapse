@@ -13,6 +13,7 @@ import Dict exposing (Dict)
 import Array exposing (Array)
 import Json.Encode as JE
 import Json.Decode as JD
+import Time
 -- 3rd
 import Keyboard.Extra as KE
 -- 1st
@@ -38,12 +39,17 @@ type Selection
   | WaypointSelected Champ Waypoint
 
 
+type Playback
+  = Playing
+  | Paused
+
+
 type Mode
   = Planning (Dict String Champ)
   -- Int is current tick (0 to 179)
   -- Tick 0 is the original state pre-simulation which can be used to
   -- transition back into planning mode.
-  | Simulating Int (Array (Dict String Champ))
+  | Simulating Playback Int (Array (Dict String Champ))
 
 
 type alias Model =
@@ -133,6 +139,9 @@ type Msg
   | DragEnd Mouse.Position
   -- KEYBOARD
   | Keyboard KE.Msg
+  -- ZOOM
+  | ZoomIn
+  | ZoomOut
 
 
 
@@ -164,7 +173,7 @@ update msg model =
     AddWaypoint x y champ ->
       -- Can only add waypoint in planning mode
       case model.mode of
-        Simulating _ _ ->
+        Simulating _ _ _ ->
           (model, Cmd.none)
         Planning champs ->
           let
@@ -188,7 +197,7 @@ update msg model =
     RemoveWaypoint champ ->
       -- Can only modify waypoints in planning mode
       case model.mode of
-        Simulating _ _ ->
+        Simulating _ _ _ ->
           (model, Cmd.none)
         Planning champs ->
           let
@@ -225,8 +234,9 @@ update msg model =
         mode' =
           case model.mode of
             Planning champs ->
-              Simulating 0 (Round.simulate champs)
-            Simulating _ ticks ->
+              --Simulating Paused 0 (Round.simulate champs)
+              Simulating Playing 0 (Round.simulate champs)
+            Simulating _ _ ticks ->
               case Array.get 0 ticks of
                 Nothing ->
                   Debug.crash "Impossible"
@@ -241,11 +251,16 @@ update msg model =
       case model.mode of
         Planning _ ->
           (model, Cmd.none)
-        Simulating _ ticks ->
+        Simulating playback _ ticks ->
           let
+            (playback', idx') =
+              if idx >= Array.length ticks then
+                (Paused, idx - 1)
+              else
+                (playback, idx)
             model' =
               { model
-                  | mode = Simulating idx ticks
+                  | mode = Simulating playback' idx' ticks
               }
           in
             (model', Cmd.none)
@@ -279,6 +294,12 @@ update msg model =
     Keyboard kbMsg ->
       let
         (kbModel', kbCmd') = KE.update kbMsg model.keyboard
+        -- spacebar toggles between modes
+        spaceMsg =
+          if KE.isPressed KE.Space kbModel' then
+            ToggleMode
+          else
+            NoOp
         -- Backspace removes the last waypoint for the selected champ,
         -- if it is ours
         backspaceMsg =
@@ -299,8 +320,19 @@ update msg model =
         , Cmd.batch
             [ Cmd.map Keyboard kbCmd'
             , Task.perform identity identity (Task.succeed backspaceMsg)
+            , Task.perform identity identity (Task.succeed spaceMsg)
             ]
         )
+    -- ZOOM
+    ZoomIn ->
+      { model
+          | scale = Basics.max 0 (model.scale + 0.1)
+      } ! [Cmd.none]
+    ZoomOut ->
+      { model
+          | scale = Basics.max 0 (model.scale - 0.1)
+      } ! [Cmd.none]
+
 
 
 
@@ -340,7 +372,7 @@ view model =
             case model.mode of
               Planning champs ->
                 champs
-              Simulating idx ticks ->
+              Simulating _ idx ticks ->
                 case Array.get idx ticks of
                   Nothing ->
                     Debug.crash "Impossible"
@@ -349,12 +381,20 @@ view model =
         , onTileClick = TileClick
         , onChampClick = ChampClick
         , onWaypointClick = WaypointClick
+        , onMouseDown =
+            Html.Events.on "mousedown" (JD.map DragStart Mouse.position)
         }
     in
       Grid.view ctx model.grid
   , Html.div
     [ Html.Attributes.id "sidebar" ]
     [ Html.button
+      [ Html.Events.onClick ZoomIn ]
+      [ Html.text "Zoom In" ]
+    , Html.button
+      [ Html.Events.onClick ZoomOut ]
+      [ Html.text "Zoom Out" ]
+    , Html.button
       [ Html.Events.onClick ClearSelection ]
       [ Html.text "Clear Selection" ]
     -- , Html.button
@@ -364,8 +404,8 @@ view model =
       [ Html.Events.onClick ToggleMode ]
       [ Html.text
           <| case model.mode of
-            Planning _ -> "Simulation Mode"
-            Simulating _ _ -> "Planning Mode"
+            Planning _ -> "Planning Mode"
+            Simulating _ _ _ -> "Simulation Mode"
       ]
     , Html.pre
       []
@@ -382,9 +422,13 @@ viewTickScrubber model =
   case model.mode of
     Planning _ ->
       Html.text ""
-    Simulating idx _ ->
+    Simulating _ idx _ ->
       Html.div
-        []
+        [ Html.Attributes.style
+            [ ("margin-left", "50px")
+            , ("margin-right", "50px")
+            ]
+        ]
         [ Html.input
           [ Html.Attributes.type' "range"
           , Html.Attributes.min "0"
@@ -424,6 +468,11 @@ subscriptions model =
             [ Mouse.moves DragAt
             , Mouse.ups DragEnd
             ]
+    , case model.mode of
+        Simulating Playing idx _ ->
+          Time.every (Time.second / 60) (\_ -> (GoToTick (idx + 1)))
+        _ ->
+          Sub.none
     ]
 
 

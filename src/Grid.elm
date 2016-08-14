@@ -13,6 +13,7 @@ import Svg.Attributes
 import Svg.Events
 import Mouse
 import String
+import Json.Decode as JD
 import Dict exposing (Dict)
 -- 1st
 import Tile exposing (Tile)
@@ -40,8 +41,7 @@ empty cols rows =
 viewTile : Context msg -> Int -> Int -> Tile -> Svg msg
 viewTile ctx y x tile =
   Svg.g
-  [
-      Svg.Events.onClick (ctx.onTileClick x y)
+  [ Svg.Events.on "dblclick" (JD.succeed (ctx.onTileClick x y))
   ]
   [
     Svg.image
@@ -96,28 +96,28 @@ view ctx grid =
   in
     Svg.svg
     [ Svg.Attributes.class "tile-map"
-    --, ctx.onMouseDown
-    , Html.Attributes.style
-        [ ( "background-position",
-            (toString <| ctx.offset.x // -2) ++ "px "
-            ++ (toString <| ctx.offset.y // -2) ++ "px"
-          )
-        ]
+    , ctx.onMouseDown
+    -- , Html.Attributes.style
+    --     [ ( "background-position",
+    --         (toString <| ctx.offset.x // -2) ++ "px "
+    --         ++ (toString <| ctx.offset.y // -2) ++ "px"
+    --       )
+    --     ]
     ]
-    ( List.append
-        [ Svg.g
-          [ transform ]
+    [ Svg.g
+      [ transform ]
+      ( List.append
           (List.indexedMap (viewRow ctx) (Array.toList grid))
-        ]
-        ( let
-            champCtx =
-            { onChampClick = ctx.onChampClick
-            , onWaypointClick = ctx.onWaypointClick
-            }
-          in
-            (List.map (Champ.view champCtx) (Dict.values ctx.champs))
-        )
-    )
+          ( let
+              champCtx =
+              { onChampClick = ctx.onChampClick
+              , onWaypointClick = ctx.onWaypointClick
+              }
+            in
+              (List.map (Champ.view champCtx) (Dict.values ctx.champs))
+          )
+      )
+    ]
 
 
 
@@ -125,7 +125,7 @@ type alias Context msg =
   { onTileClick : (Int -> Int -> msg)
   , onChampClick : (Champ -> msg)
   , onWaypointClick : (Champ -> Waypoint -> msg)
-    --, onMouseDown : Html.Attribute msg
+  , onMouseDown : Html.Attribute msg
     --, onMouseOver : (Int -> Int -> msg)
   , offset : Mouse.Position
   , rows : Int
