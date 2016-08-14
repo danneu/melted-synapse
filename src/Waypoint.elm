@@ -4,5 +4,5 @@ module Waypoint exposing (..)
 
 
 type alias Waypoint =
-  { position : (Int, Int) -- x, y
+  { position : (Float, Float) -- x, y
   }

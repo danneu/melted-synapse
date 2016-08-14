@@ -13,13 +13,15 @@ import Waypoint exposing (Waypoint)
 
 
 type alias Champ =
-  { hp : (Int, Int) -- (currentHp, maxHp)
-  , position : (Int, Int)  -- x, y
+  { name : String
+  , hp : (Int, Int) -- (currentHp, maxHp)
+  , position : (Float, Float)  -- x, y
   , waypoints : List Waypoint
+  , speed : Float -- meters aka tiles per second
   }
 
 
-tilesize : Int
+tilesize : Float
 tilesize =
   64
 
@@ -53,12 +55,11 @@ view ctx champ =
           , Svg.Attributes.stroke "black"
           , Svg.Attributes.strokeWidth "6"
           , let
-              --coords = [ (4, 4), (7, 1), (9, 6)]
               points =
                 List.map
                   (\ (x, y) ->
-                    ( x * tilesize + tilesize // 2
-                    , y * tilesize + tilesize // 2
+                    ( x * tilesize + tilesize / 2
+                    , y * tilesize + tilesize / 2
                     )
                   )
                   (champ.position :: (List.map .position champ.waypoints))

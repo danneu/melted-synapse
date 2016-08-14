@@ -13,6 +13,7 @@ import Svg.Attributes
 import Svg.Events
 import Mouse
 import String
+import Dict exposing (Dict)
 -- 1st
 import Tile exposing (Tile)
 import Waypoint exposing (Waypoint)
@@ -103,17 +104,20 @@ view ctx grid =
           )
         ]
     ]
-    [ Svg.g
-      [ transform ]
-      (List.indexedMap (viewRow ctx) (Array.toList grid))
-    , let
-        champCtx =
-         { onChampClick = ctx.onChampClick
-         , onWaypointClick = ctx.onWaypointClick
-         }
-      in
-        Champ.view champCtx ctx.champ
-    ]
+    ( List.append
+        [ Svg.g
+          [ transform ]
+          (List.indexedMap (viewRow ctx) (Array.toList grid))
+        ]
+        ( let
+            champCtx =
+            { onChampClick = ctx.onChampClick
+            , onWaypointClick = ctx.onWaypointClick
+            }
+          in
+            (List.map (Champ.view champCtx) (Dict.values ctx.champs))
+        )
+    )
 
 
 
@@ -127,5 +131,5 @@ type alias Context msg =
   , rows : Int
   , cols : Int
   , scale : Float
-  , champ : Champ
+  , champs : Dict String Champ
   }
