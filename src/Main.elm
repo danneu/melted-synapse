@@ -16,6 +16,7 @@ import Json.Decode as JD
 import Time
 -- 3rd
 import Keyboard.Extra as KE
+import List.Extra
 -- 1st
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
@@ -61,7 +62,6 @@ type alias Model =
   , scale : Float
   , mode : Mode
   , selection : Selection
-  --, hoveredTile : (Int, Int) -- x,y
   , keyboard : KE.Model
   }
 
@@ -209,7 +209,7 @@ update msg model =
               }
               |> Champ.faceWaypoint
             selection' =
-              case List.head waypoints' of
+              case List.Extra.last waypoints' of
                 Nothing ->
                   ChampSelected champ'
                 Just waypoint ->
@@ -378,6 +378,20 @@ view model =
                     Debug.crash "Impossible"
                   Just champs ->
                     champs
+        , selectedChamp =
+            case model.selection of
+              ChampSelected champ ->
+                Just champ
+              WaypointSelected champ _ ->
+                Just champ
+              _ ->
+                Nothing
+        , selectedWaypoint =
+            case model.selection of
+              WaypointSelected _ waypoint ->
+                Just waypoint
+              _ ->
+                Nothing
         , onTileClick = TileClick
         , onChampClick = ChampClick
         , onWaypointClick = WaypointClick

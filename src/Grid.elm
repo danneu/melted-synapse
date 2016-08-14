@@ -112,6 +112,8 @@ view ctx grid =
               champCtx =
               { onChampClick = ctx.onChampClick
               , onWaypointClick = ctx.onWaypointClick
+              , selectedChamp = ctx.selectedChamp
+              , selectedWaypoint = ctx.selectedWaypoint
               }
             in
               (List.map (Champ.view champCtx) (Dict.values ctx.champs))
@@ -132,4 +134,6 @@ type alias Context msg =
   , cols : Int
   , scale : Float
   , champs : Dict String Champ
+  , selectedChamp : Maybe Champ
+  , selectedWaypoint : Maybe Waypoint
   }

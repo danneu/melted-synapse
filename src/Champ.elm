@@ -46,25 +46,55 @@ tilesize =
   64
 
 
-viewWaypoint : (Waypoint -> msg) -> Waypoint -> Svg msg
-viewWaypoint onWaypointClick waypoint =
+viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
+viewWaypoint maybeWaypoint onWaypointClick waypoint =
   let
     (x, y) = waypoint.position
+    -- TEMP HACK: waypoint positions are not going to be unique
+    -- since they can stack. Need a better way to compare waypoints.
+    isSelected =
+      case maybeWaypoint of
+        Just selectedWaypoint ->
+          selectedWaypoint.position == waypoint.position
+        _ ->
+          False
   in
-    Svg.image
-    [ Svg.Attributes.x (toString (x * tilesize))
-    , Svg.Attributes.y (toString (y * tilesize))
-    , Svg.Attributes.width <| toString tilesize
-    , Svg.Attributes.height <| toString tilesize
-    , Svg.Attributes.xlinkHref "/img/waypoint.png"
-    , Svg.Events.onClick (onWaypointClick waypoint)
-    ]
+    Svg.g
     []
+    [ if isSelected then
+        Svg.rect
+        [ Svg.Attributes.x (toString (x * tilesize))
+        , Svg.Attributes.y (toString (y * tilesize))
+        , Svg.Attributes.width <| toString tilesize
+        , Svg.Attributes.height <| toString tilesize
+        , Svg.Attributes.fill "none"
+        , Svg.Attributes.stroke "cyan"
+        , Svg.Attributes.strokeWidth "3"
+        ]
+        []
+      else
+        Svg.text' [] []
+    , Svg.image
+      [ Svg.Attributes.x (toString (x * tilesize))
+      , Svg.Attributes.y (toString (y * tilesize))
+      , Svg.Attributes.width <| toString tilesize
+      , Svg.Attributes.height <| toString tilesize
+      , Svg.Attributes.xlinkHref "/img/waypoint.png"
+      , Svg.Events.onClick (onWaypointClick waypoint)
+      ]
+      []
+    ]
 
 
 view : Context msg -> Champ -> Svg msg
 view ctx champ =
   let
+    champIsSelected =
+      case ctx.selectedChamp of
+        Just selectedChamp ->
+          selectedChamp.name == champ.name
+        _ ->
+          False
     (x, y) = champ.position
   in
     Svg.g
@@ -90,6 +120,19 @@ view ctx champ =
               Svg.Attributes.points string
           ]
           []
+        , if champIsSelected then
+            Svg.rect
+            [ Svg.Attributes.x (toString (x * tilesize))
+            , Svg.Attributes.y (toString (y * tilesize))
+            , Svg.Attributes.width <| toString tilesize
+            , Svg.Attributes.height <| toString tilesize
+            , Svg.Attributes.fill "none"
+            , Svg.Attributes.stroke "yellow"
+            , Svg.Attributes.strokeWidth "3"
+            ]
+            []
+          else
+            Svg.text' [] []
         , let
             degrees =
               (champ.angle * 180 / pi) + 90
@@ -111,11 +154,13 @@ view ctx champ =
             ]
             []
         ]
-        (List.map (viewWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
+        (List.map (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
       )
 
 
 type alias Context msg =
   { onChampClick : (Champ -> msg)
   , onWaypointClick : (Champ -> Waypoint -> msg)
+  , selectedChamp : Maybe Champ
+  , selectedWaypoint : Maybe Waypoint
   }
