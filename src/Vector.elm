@@ -35,8 +35,8 @@ dist (x1, y1) (x2, y2) =
     sqrt (x' * x' + y' * y')
 
 
-mult : Float -> Vector -> Vector
-mult scalar (x, y) =
+scale : Float -> Vector -> Vector
+scale scalar (x, y) =
   (x * scalar, y * scalar)
 
 

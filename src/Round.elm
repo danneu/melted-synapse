@@ -28,23 +28,17 @@ stepChamp name champ dict =
         else
           let
             (prevX, prevY) = champ.position
-            -- TODO: Prevent champ from overshooting waypoint, then
-            -- we can do length==0 comparison isntead of len<speed*timestep
             (dx, dy) =
               Vector.fromPoints champ.position waypoint.position
               |> Vector.normalize
-              |> Vector.mult (champ.speed * 1/60)
+              |> Vector.scale (champ.speed * 1/60)
             position' =
               (prevX + dx, prevY + dy)
-            angle' =
-              Vector.angleTo champ.position waypoint.position
-            --_ = Debug.log "angle'" (angle', angle' * 180 / pi)
           in
             { champ
                 | position = position'
-                , angle = angle'
-
             }
+            |> Champ.faceWaypoint
       in
         Dict.insert name champ' dict
 
@@ -61,6 +55,5 @@ stepTick _  ticks =
 simulate : Dict String Champ -> Array (Dict String Champ)
 simulate champs =
   List.foldl stepTick [champs] [1..180]
-  --List.foldl stepTick [champs] [1..10]
   |> List.reverse
   |> Array.fromList

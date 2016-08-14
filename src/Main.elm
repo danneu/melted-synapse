@@ -79,6 +79,7 @@ init =
         , { position = (9, 6) }
         ]
       }
+      |> Champ.faceWaypoint
     champ2 =
       { name = "champ2"
       , hp = (100, 100)
@@ -91,6 +92,7 @@ init =
         , { position = (3, 8) }
         ]
       }
+      |> Champ.faceWaypoint
     champs =
       Dict.fromList
         [ (champ1.name, champ1)
@@ -173,6 +175,7 @@ update msg model =
               { champ
                   | waypoints = List.append champ.waypoints [waypoint]
               }
+              |> Champ.faceWaypoint
             champs' =
               Dict.insert champ'.name champ' champs
           in
@@ -195,6 +198,7 @@ update msg model =
             champ' =
               { champ | waypoints = waypoints'
               }
+              |> Champ.faceWaypoint
             selection' =
               case List.head waypoints' of
                 Nothing ->

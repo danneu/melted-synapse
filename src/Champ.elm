@@ -10,6 +10,7 @@ import Svg.Events
 import String
 -- 1st
 import Waypoint exposing (Waypoint)
+import Vector
 
 
 type alias Champ =
@@ -20,6 +21,24 @@ type alias Champ =
   , speed : Float -- meters aka tiles per second
   , angle : Float
   }
+
+
+-- sets champ's angle based on next waypoint
+-- noops if no waypoint
+--
+-- Call this whenever the first waypoint is updated
+faceWaypoint : Champ -> Champ
+faceWaypoint champ =
+  case champ.waypoints of
+    [] ->
+      champ
+    waypoint :: _ ->
+      { champ
+          | angle = Vector.angleTo champ.position waypoint.position
+      }
+
+
+-- VIEW
 
 
 tilesize : Float
