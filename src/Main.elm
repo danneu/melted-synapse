@@ -421,9 +421,39 @@ view model =
             Planning _ -> "Planning Mode"
             Simulating _ _ _ -> "Simulation Mode"
       ]
-    , Html.pre
+    , Html.div
+      [ Html.Attributes.style
+          [ ("display", "inline-block")
+          , ("margin-left", "10px")
+          ]
+      ]
+      [ Html.text "Source: "
+      , Html.a
+        [ Html.Attributes.href "https://github.com/danneu/melted-synapse"
+        , Html.Attributes.target "_blank"
+        ]
+        [ Html.text "danneu/melted-synapse" ]
+      ]
+    , Html.ul
       []
-      [ Html.text <| "Selection: " ++ toString model.selection
+      [ Html.li
+        []
+        [ Html.text "Click a champ or waypoint to select it." ]
+      , Html.li
+        []
+        [ Html.text "Double-click an empty tile to add a waypoint for selected champ." ]
+      , Html.li
+        []
+        [ Html.text "Press escape to remove last waypoint for selected champ." ]
+      , Html.li
+        []
+        [ Html.text "Press spacebar to toggle from planning-mode into simulation-mode." ]
+      , Html.li
+        []
+        [ Html.text "Click and drag anywhere on the map to pan." ]
+      , Html.li
+        []
+        [ Html.text "You must be in planning-mode to modify waypoints." ]
       ]
     , viewTickScrubber model
     ]
