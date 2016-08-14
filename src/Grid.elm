@@ -49,7 +49,7 @@ viewTile ctx y x tile =
      , Svg.Attributes.y (toString (y * tilesize))
      , Svg.Attributes.width <| toString tilesize
      , Svg.Attributes.height <| toString tilesize
-     , Svg.Attributes.xlinkHref "/img/grass1.gif"
+     , Svg.Attributes.xlinkHref "./img/grass1.gif"
      ]
      []
   , Svg.rect
