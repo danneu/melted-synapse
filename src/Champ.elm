@@ -86,7 +86,7 @@ view ctx champ =
             , Svg.Attributes.y (toString (y * tilesize))
             , Svg.Attributes.width <| toString tilesize
             , Svg.Attributes.height <| toString tilesize
-            , Svg.Attributes.xlinkHref "/img/warrior128.png"
+            , Svg.Attributes.xlinkHref "/img/champ-idle.gif"
             , Svg.Attributes.transform transform
             , Svg.Events.onClick (ctx.onChampClick champ)
             ]
