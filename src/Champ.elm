@@ -120,19 +120,37 @@ view ctx champ =
               Svg.Attributes.points string
           ]
           []
+        -- This circle shows auto-attack range
         , if champIsSelected then
-            Svg.rect
-            [ Svg.Attributes.x (toString (x * tilesize))
-            , Svg.Attributes.y (toString (y * tilesize))
-            , Svg.Attributes.width <| toString tilesize
-            , Svg.Attributes.height <| toString tilesize
+            Svg.circle
+            [ Svg.Attributes.cx (toString (x * tilesize + tilesize / 2))
+            , Svg.Attributes.cy (toString (y * tilesize + tilesize / 2))
+            , Svg.Attributes.r (toString tilesize)
+            -- , Svg.Attributes.fill "red"
+            -- , Svg.Attributes.fillOpacity "0.5"
             , Svg.Attributes.fill "none"
-            , Svg.Attributes.stroke "yellow"
-            , Svg.Attributes.strokeWidth "3"
+            , Svg.Attributes.stroke "red"
+            , Svg.Attributes.strokeWidth "5"
+            , Svg.Attributes.strokeDasharray "10,5"
+            , Svg.Attributes.strokeOpacity "0.75"
             ]
             []
           else
             Svg.text' [] []
+        -- General selection indicator
+        -- , if champIsSelected then
+        --     Svg.rect
+        --     [ Svg.Attributes.x (toString (x * tilesize))
+        --     , Svg.Attributes.y (toString (y * tilesize))
+        --     , Svg.Attributes.width <| toString tilesize
+        --     , Svg.Attributes.height <| toString tilesize
+        --     , Svg.Attributes.fill "none"
+        --     , Svg.Attributes.stroke "yellow"
+        --     , Svg.Attributes.strokeWidth "3"
+        --     ]
+        --     []
+        --   else
+        --     Svg.text' [] []
         , let
             degrees =
               (champ.angle * 180 / pi) + 90
