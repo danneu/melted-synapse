@@ -6,11 +6,13 @@ import Html exposing (Html)
 import Html.App
 import Html.Attributes
 import Html.Events
-import Svg exposing (..)
-import Svg.Attributes
+import Html.Events.Extra
 import Mouse
 import Task
 import Dict exposing (Dict)
+import Array exposing (Array)
+import Json.Encode as JE
+import Json.Decode as JD
 -- 3rd
 import Keyboard.Extra as KE
 -- 1st
@@ -51,7 +53,7 @@ type alias Model =
   , position : Mouse.Position
   , drag : Maybe Drag
   , scale : Float
-  , champs: Dict String Champ
+  , mode : Mode
   , selection : Selection
   --, hoveredTile : (Int, Int) -- x,y
   , keyboard : KE.Model
@@ -71,6 +73,7 @@ init =
       , hp = (100, 100)
       , position = (4.5, 4.5)
       , speed = 2
+      , angle = 0
       , waypoints =
         [ { position = (7, 1) }
         , { position = (9, 6) }
@@ -81,8 +84,11 @@ init =
       , hp = (100, 100)
       , position = (2, 7)
       , speed = 2
+      , angle = 0
       , waypoints =
-        [ { position = (1, 2) }
+        [ { position = (3, 6) }
+        , { position = (4, 7) }
+        , { position = (3, 8) }
         ]
       }
     champs =
@@ -97,7 +103,7 @@ init =
     , position = Mouse.Position 0 0
     , drag = Nothing
     , scale = 1
-    , champs = champs
+    , mode = Planning champs
     , keyboard = kbModel
     , selection = ChampSelected champ1
     }
@@ -116,7 +122,9 @@ type Msg
   | AddWaypoint Int Int Champ
   | RemoveWaypoint Champ
   | ClearSelection
-  | SimulateRound
+  --| SimulateRound
+  | ToggleMode
+  | GoToTick Int
   -- DRAG
   | DragStart Mouse.Position
   | DragAt Mouse.Position
@@ -139,22 +147,6 @@ update msg model =
           update (AddWaypoint x y champ) model
         _ ->
           (model, Cmd.none)
-    AddWaypoint x y champ ->
-      let
-        waypoint =
-          { position = (toFloat x, toFloat y)
-          }
-        champ' =
-          { champ
-              | waypoints = List.append champ.waypoints [waypoint]
-          }
-      in
-        ( { model
-              | champs = Dict.insert champ'.name champ' model.champs
-              , selection = WaypointSelected champ' waypoint
-          }
-        , Cmd.none
-        )
     ChampClick champ ->
       ( { model
             | selection = ChampSelected champ
@@ -167,40 +159,97 @@ update msg model =
         }
       , Cmd.none
       )
+    AddWaypoint x y champ ->
+      -- Can only add waypoint in planning mode
+      case model.mode of
+        Simulating _ _ ->
+          (model, Cmd.none)
+        Planning champs ->
+          let
+            waypoint =
+              { position = (toFloat x, toFloat y)
+              }
+            champ' =
+              { champ
+                  | waypoints = List.append champ.waypoints [waypoint]
+              }
+            champs' =
+              Dict.insert champ'.name champ' champs
+          in
+            ( { model
+                  | mode = Planning champs'
+                  , selection = WaypointSelected champ' waypoint
+              }
+            , Cmd.none
+            )
     RemoveWaypoint champ ->
-      let
-        -- Drop the last waypoint
-        waypoints' =
-          Util.List.dropRight 1 champ.waypoints
-        champ' =
-          { champ | waypoints = waypoints'
-          }
-        selection' =
-          case List.head waypoints' of
-            Nothing ->
-              ChampSelected champ'
-            Just waypoint ->
-              WaypointSelected champ' waypoint
-        champs' =
-          Dict.insert champ'.name champ' model.champs
-      in
-        ( { model
-              | champs = champs'
-              , selection = selection'
-          }
-        , Cmd.none
-        )
+      -- Can only modify waypoints in planning mode
+      case model.mode of
+        Simulating _ _ ->
+          (model, Cmd.none)
+        Planning champs ->
+          let
+            -- Drop the last waypoint
+            waypoints' =
+              Util.List.dropRight 1 champ.waypoints
+            champ' =
+              { champ | waypoints = waypoints'
+              }
+            selection' =
+              case List.head waypoints' of
+                Nothing ->
+                  ChampSelected champ'
+                Just waypoint ->
+                  WaypointSelected champ' waypoint
+            champs' =
+              Dict.insert champ'.name champ' champs
+          in
+            ( { model
+                  | mode = Planning champs'
+                  , selection = selection'
+              }
+            , Cmd.none
+            )
     ClearSelection ->
       ( { model
             | selection = None
         }
       , Cmd.none
       )
-    SimulateRound ->
+    ToggleMode ->
       let
-        _ = Debug.log "round" (Round.simulate model.champs)
+        mode' =
+          case model.mode of
+            Planning champs ->
+              Simulating 0 (Round.simulate champs)
+            Simulating _ ticks ->
+              case Array.get 0 ticks of
+                Nothing ->
+                  Debug.crash "Impossible"
+                Just champs ->
+                  Planning champs
       in
-        (model, Cmd.none)
+        ( { model | mode = mode' }
+        , Cmd.none
+        )
+    GoToTick idx ->
+      -- Only works in simulationg mode
+      case model.mode of
+        Planning _ ->
+          (model, Cmd.none)
+        Simulating _ ticks ->
+          let
+            model' =
+              { model
+                  | mode = Simulating idx ticks
+              }
+          in
+            (model', Cmd.none)
+    -- SimulateRound ->
+    --   let
+    --     _ = Debug.log "round" (Round.simulate model.champs)
+    --   in
+    --     (model, Cmd.none)
     -- DRAG
     DragStart xy ->
       { model
@@ -283,7 +332,16 @@ view model =
             --   _ ->
             --     model.position
             getPosition model
-        , champs = model.champs
+        , champs =
+            case model.mode of
+              Planning champs ->
+                champs
+              Simulating idx ticks ->
+                case Array.get idx ticks of
+                  Nothing ->
+                    Debug.crash "Impossible"
+                  Just champs ->
+                    champs
         , onTileClick = TileClick
         , onChampClick = ChampClick
         , onWaypointClick = WaypointClick
@@ -295,15 +353,56 @@ view model =
     [ Html.button
       [ Html.Events.onClick ClearSelection ]
       [ Html.text "Clear Selection" ]
+    -- , Html.button
+    --   [ Html.Events.onClick SimulateRound ]
+    --   [ Html.text "Simulate" ]
     , Html.button
-      [ Html.Events.onClick SimulateRound ]
-      [ Html.text "Simulate" ]
+      [ Html.Events.onClick ToggleMode ]
+      [ Html.text
+          <| case model.mode of
+            Planning _ -> "Simulation Mode"
+            Simulating _ _ -> "Planning Mode"
+      ]
     , Html.pre
       []
       [ Html.text <| "Selection: " ++ toString model.selection
       ]
+    , viewTickScrubber model
     ]
   ]
+
+
+viewTickScrubber : Model -> Html Msg
+viewTickScrubber model =
+  -- only visible in simulation mode
+  case model.mode of
+    Planning _ ->
+      Html.text ""
+    Simulating idx _ ->
+      Html.div
+        []
+        [ Html.input
+          [ Html.Attributes.type' "range"
+          , Html.Attributes.min "0"
+          , Html.Attributes.max "180"
+          , Html.Attributes.value (toString idx)
+          , Html.Attributes.list "tick-scrubber"
+          , Html.Attributes.property "step" (JE.string "1")
+          , Html.Events.on
+              "input"
+              (JD.map GoToTick Html.Events.Extra.targetValueInt)
+          ]
+          []
+        , Html.datalist
+          [ Html.Attributes.id "tick-scrubber"
+          ]
+          ( List.map
+              (\n ->
+                (Html.option [] [ Html.text (toString n) ])
+              )
+              [0..179]
+          )
+        ]
 
 
 -- SUBSCRIPTIONS

@@ -18,6 +18,7 @@ type alias Champ =
   , position : (Float, Float)  -- x, y
   , waypoints : List Waypoint
   , speed : Float -- meters aka tiles per second
+  , angle : Float
   }
 
 
@@ -70,15 +71,26 @@ view ctx champ =
               Svg.Attributes.points string
           ]
           []
-        , Svg.image
-          [ Svg.Attributes.x (toString (x * tilesize))
-          , Svg.Attributes.y (toString (y * tilesize))
-          , Svg.Attributes.width <| toString tilesize
-          , Svg.Attributes.height <| toString tilesize
-          , Svg.Attributes.xlinkHref "/img/warrior128.png"
-          , Svg.Events.onClick (ctx.onChampClick champ)
-          ]
-          []
+        , let
+            degrees =
+              (champ.angle * 180 / pi) + 90
+            (originX, originY) =
+              (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
+            transform =
+              "rotate("
+              ++ String.join " " (List.map toString [degrees, originX, originY])
+              ++ ")"
+          in
+            Svg.image
+            [ Svg.Attributes.x (toString (x * tilesize))
+            , Svg.Attributes.y (toString (y * tilesize))
+            , Svg.Attributes.width <| toString tilesize
+            , Svg.Attributes.height <| toString tilesize
+            , Svg.Attributes.xlinkHref "/img/warrior128.png"
+            , Svg.Attributes.transform transform
+            , Svg.Events.onClick (ctx.onChampClick champ)
+            ]
+            []
         ]
         (List.map (viewWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
       )
