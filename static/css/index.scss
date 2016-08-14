@@ -18,6 +18,16 @@ body {
 }
 
 
-.no-pointer {
+.no-select {
   pointer-events: none;
+  user-select: none;
+}
+
+#sidebar {
+  position: fixed;
+  bottom: 0;
+  height: 200px;
+  width: 100%;
+  border-left: 1px solid black;
+  background-color: #ccc;
 }

@@ -66,7 +66,7 @@ viewTile ctx y x tile =
   , Svg.text'
       [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
       , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
-      , Svg.Attributes.class "no-pointer"
+      , Svg.Attributes.class "no-select"
       ]
       [ Svg.text <| toString (x, y) ]
   ]
@@ -106,13 +106,21 @@ view ctx grid =
     [ Svg.g
       [ transform ]
       (List.indexedMap (viewRow ctx) (Array.toList grid))
-    , Champ.view ctx.champ
+    , let
+        champCtx =
+         { onChampClick = ctx.onChampClick
+         , onWaypointClick = ctx.onWaypointClick
+         }
+      in
+        Champ.view champCtx ctx.champ
     ]
 
 
 
 type alias Context msg =
   { onTileClick : (Int -> Int -> msg)
+  , onChampClick : (Champ -> msg)
+  , onWaypointClick : (Champ -> Waypoint -> msg)
     --, onMouseDown : Html.Attribute msg
     --, onMouseOver : (Int -> Int -> msg)
   , offset : Mouse.Position

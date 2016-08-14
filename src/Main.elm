@@ -5,6 +5,7 @@ module Main exposing (..)
 import Html exposing (Html)
 import Html.App
 import Html.Attributes
+import Html.Events
 import Svg exposing (..)
 import Svg.Attributes
 import Mouse
@@ -15,6 +16,7 @@ import Keyboard.Extra as KE
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
+import Util.List
 
 
 -- MODEL
@@ -26,6 +28,12 @@ type alias Drag =
   }
 
 
+type Selection
+  = None
+  | ChampSelected Champ
+  | WaypointSelected Champ Waypoint
+
+
 type alias Model =
   { rows : Int
   , cols : Int
@@ -34,6 +42,7 @@ type alias Model =
   , drag : Maybe Drag
   , scale : Float
   , champ : Champ
+  , selection : Selection
   , keyboard : KE.Model
   }
 
@@ -46,6 +55,13 @@ init =
     rows = 10
     cols = 15
     (kbModel, kbCmd) = KE.init
+    champ =
+      { position = (4, 4)
+      , waypoints =
+        [ { position = (7, 1) }
+        , { position = (9, 6) }
+        ]
+      }
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
@@ -53,14 +69,9 @@ init =
     , position = Mouse.Position 0 0
     , drag = Nothing
     , scale = 1
-    , champ =
-        { position = (4, 4)
-        , waypoints =
-          [ { position = (7, 1) }
-          , { position = (9, 6) }
-          ]
-        }
+    , champ = champ
     , keyboard = kbModel
+    , selection = ChampSelected champ
     }
   , Cmd.map Keyboard kbCmd
   )
@@ -72,7 +83,10 @@ init =
 type Msg
   = NoOp
   | TileClick Int Int
+  | ChampClick Champ
+  | WaypointClick Champ Waypoint
   | RemoveWaypoint Champ
+  | ClearSelection
   -- DRAG
   | DragStart Mouse.Position
   | DragAt Mouse.Position
@@ -97,23 +111,51 @@ update msg model =
               | waypoints = List.append champ.waypoints [waypoint]
           }
       in
-        ( { model | champ = champ' }
+        ( { model
+              | champ = champ'
+              , selection = WaypointSelected champ' waypoint
+          }
         , Cmd.none
         )
+    ChampClick champ ->
+      ( { model
+            | selection = ChampSelected champ
+        }
+      , Cmd.none
+      )
+    WaypointClick champ waypoint ->
+      ( { model
+            | selection = WaypointSelected champ waypoint
+        }
+      , Cmd.none
+      )
     RemoveWaypoint champ ->
       let
-        -- Drop the last waypoints
+        -- Drop the last waypoint
         waypoints' =
-          List.take ((List.length champ.waypoints) - 1) champ.waypoints
+          Util.List.dropRight 1 champ.waypoints
         champ' =
           { champ | waypoints = waypoints'
           }
+        selection' =
+          case List.head waypoints' of
+            Nothing ->
+              None
+            Just waypoint ->
+              WaypointSelected champ' waypoint
       in
         ( { model
               | champ = champ'
+              , selection = selection'
           }
         , Cmd.none
         )
+    ClearSelection ->
+      ( { model
+            | selection = None
+        }
+      , Cmd.none
+      )
     -- DRAG
     DragStart xy ->
       { model
@@ -139,22 +181,7 @@ update msg model =
     Keyboard kbMsg ->
       let
         (kbModel', kbCmd') = KE.update kbMsg model.keyboard
-        -- -- Spacebar toggles mode
-        -- mode' =
-        --   if KE.isPressed KE.Space kbModel' then
-        --     case model.mode of
-        --       Paint -> Move
-        --       Move -> Paint
-        --   else
-        --     model.mode
-        -- Super-Z rewinds from undo stack
-        -- undoMsg =
-        --   if KE.isPressed KE.Super kbModel' && KE.isPressed KE.CharZ kbModel' then
-        --     Undo
-        --   else
-        --     NoOp
         -- Backspace removes the last waypoint for the selected champ,
-
         -- if it is ours
         backspaceMsg =
           if KE.isPressed KE.BackSpace kbModel' then
@@ -207,9 +234,21 @@ view model =
             getPosition model
         , champ = model.champ
         , onTileClick = TileClick
+        , onChampClick = ChampClick
+        , onWaypointClick = WaypointClick
         }
     in
       Grid.view ctx model.grid
+  , Html.div
+    [ Html.Attributes.id "sidebar" ]
+    [ Html.button
+      [ Html.Events.onClick ClearSelection ]
+      [ Html.text "Clear Selection" ]
+    , Html.pre
+      []
+      [ Html.text <| "Selection: " ++ toString model.selection
+      ]
+    ]
   ]
 
 

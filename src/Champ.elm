@@ -23,10 +23,10 @@ tilesize =
   64
 
 
-viewWaypoint : Waypoint -> Svg msg
-viewWaypoint {position} =
+viewWaypoint : (Waypoint -> msg) -> Waypoint -> Svg msg
+viewWaypoint onWaypointClick waypoint =
   let
-    (x, y) = position
+    (x, y) = waypoint.position
   in
     Svg.image
     [ Svg.Attributes.x (toString (x * tilesize))
@@ -34,12 +34,13 @@ viewWaypoint {position} =
     , Svg.Attributes.width <| toString tilesize
     , Svg.Attributes.height <| toString tilesize
     , Svg.Attributes.xlinkHref "/img/waypoint.png"
+    , Svg.Events.onClick (onWaypointClick waypoint)
     ]
     []
 
 
-view : Champ -> Svg msg
-view champ =
+view : Context msg -> Champ -> Svg msg
+view ctx champ =
   let
     (x, y) = champ.position
   in
@@ -73,8 +74,15 @@ view champ =
           , Svg.Attributes.width <| toString tilesize
           , Svg.Attributes.height <| toString tilesize
           , Svg.Attributes.xlinkHref "/img/warrior128.png"
+          , Svg.Events.onClick (ctx.onChampClick champ)
           ]
           []
         ]
-        (List.map viewWaypoint champ.waypoints)
+        (List.map (viewWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
       )
+
+
+type alias Context msg =
+  { onChampClick : (Champ -> msg)
+  , onWaypointClick : (Champ -> Waypoint -> msg)
+  }
