@@ -8,6 +8,9 @@ import Html.Attributes
 import Svg exposing (..)
 import Svg.Attributes
 import Mouse
+import Task
+-- 3rd
+import Keyboard.Extra as KE
 -- 1st
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
@@ -31,6 +34,7 @@ type alias Model =
   , drag : Maybe Drag
   , scale : Float
   , champ : Champ
+  , keyboard : KE.Model
   }
 
 
@@ -41,6 +45,7 @@ init =
   let
     rows = 10
     cols = 15
+    (kbModel, kbCmd) = KE.init
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
@@ -55,8 +60,9 @@ init =
           , { position = (9, 6) }
           ]
         }
+    , keyboard = kbModel
     }
-  , Cmd.none
+  , Cmd.map Keyboard kbCmd
   )
 
 
@@ -66,10 +72,13 @@ init =
 type Msg
   = NoOp
   | TileClick Int Int
+  | RemoveWaypoint Champ
   -- DRAG
   | DragStart Mouse.Position
   | DragAt Mouse.Position
   | DragEnd Mouse.Position
+  -- KEYBOARD
+  | Keyboard KE.Msg
 
 
 
@@ -91,6 +100,20 @@ update msg model =
         ( { model | champ = champ' }
         , Cmd.none
         )
+    RemoveWaypoint champ ->
+      let
+        -- Drop the last waypoints
+        waypoints' =
+          List.take ((List.length champ.waypoints) - 1) champ.waypoints
+        champ' =
+          { champ | waypoints = waypoints'
+          }
+      in
+        ( { model
+              | champ = champ'
+          }
+        , Cmd.none
+        )
     -- DRAG
     DragStart xy ->
       { model
@@ -110,6 +133,44 @@ update msg model =
               --   _ -> model.position
               getPosition model
       } ! [Cmd.none]
+    -- KEYBOARD
+    -- TODO: Figure out intended usage of this library instead of stuffing
+    -- everything in this action
+    Keyboard kbMsg ->
+      let
+        (kbModel', kbCmd') = KE.update kbMsg model.keyboard
+        -- -- Spacebar toggles mode
+        -- mode' =
+        --   if KE.isPressed KE.Space kbModel' then
+        --     case model.mode of
+        --       Paint -> Move
+        --       Move -> Paint
+        --   else
+        --     model.mode
+        -- Super-Z rewinds from undo stack
+        -- undoMsg =
+        --   if KE.isPressed KE.Super kbModel' && KE.isPressed KE.CharZ kbModel' then
+        --     Undo
+        --   else
+        --     NoOp
+        -- Backspace removes the last waypoint for the selected champ,
+
+        -- if it is ours
+        backspaceMsg =
+          if KE.isPressed KE.BackSpace kbModel' then
+            RemoveWaypoint model.champ
+          else
+            NoOp
+      in
+        ( { model
+              | keyboard = kbModel'
+          }
+        , Cmd.batch
+            [ Cmd.map Keyboard kbCmd'
+            , Task.perform identity identity (Task.succeed backspaceMsg)
+            ]
+        )
+
 
 
 getPosition : Model -> Mouse.Position
@@ -158,8 +219,8 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-    [ --Sub.map Keyboard KE.subscriptions
-      case model.drag of
+    [ Sub.map Keyboard KE.subscriptions
+    , case model.drag of
         Nothing ->
           Sub.none
         Just _ ->

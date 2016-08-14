@@ -16,3 +16,8 @@ body {
   // UI should appear above the tile map
   z-index: -1;
 }
+
+
+.no-pointer {
+  pointer-events: none;
+}

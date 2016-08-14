@@ -39,7 +39,9 @@ empty cols rows =
 viewTile : Context msg -> Int -> Int -> Tile -> Svg msg
 viewTile ctx y x tile =
   Svg.g
-  []
+  [
+      Svg.Events.onClick (ctx.onTileClick x y)
+  ]
   [
     Svg.image
      [ Svg.Attributes.x (toString (x * tilesize))
@@ -47,7 +49,6 @@ viewTile ctx y x tile =
      , Svg.Attributes.width <| toString tilesize
      , Svg.Attributes.height <| toString tilesize
      , Svg.Attributes.xlinkHref "/img/grass1.gif"
-     , Svg.Events.onClick (ctx.onTileClick x y)
      ]
      []
   , Svg.rect
@@ -57,16 +58,15 @@ viewTile ctx y x tile =
     , Svg.Attributes.y (toString (y * tilesize))
     , Svg.Attributes.stroke "black"
     , Svg.Attributes.fill "none"
-    --, Svg.Attributes.fillOpacity fillOpacity
-    --, Svg.Attributes.class "tile"
     -- , Svg.Events.onMouseOut (ctx.onMouseOver x y)
+
     -- , Svg.Events.onMouseOver (ctx.onMouseOver x y)
-    , Svg.Events.onClick (ctx.onTileClick x y)
     ]
     []
   , Svg.text'
       [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
       , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
+      , Svg.Attributes.class "no-pointer"
       ]
       [ Svg.text <| toString (x, y) ]
   ]
