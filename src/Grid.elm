@@ -69,28 +69,6 @@ viewTile ctx y x tile =
       , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
       ]
       [ Svg.text <| toString (x, y) ]
-  , if List.any (\wp -> wp.position == (x, y)) ctx.champ.waypoints then
-      Svg.image
-      [ Svg.Attributes.x (toString (x * tilesize))
-      , Svg.Attributes.y (toString (y * tilesize))
-      , Svg.Attributes.width <| toString tilesize
-      , Svg.Attributes.height <| toString tilesize
-      , Svg.Attributes.xlinkHref "/img/waypoint.png"
-      ]
-      []
-    else
-      Svg.text' [] [ Svg.text "" ]
-  , if ctx.champ.position == (x, y) then
-      Svg.image
-      [ Svg.Attributes.x (toString (x * tilesize))
-      , Svg.Attributes.y (toString (y * tilesize))
-      , Svg.Attributes.width <| toString tilesize
-      , Svg.Attributes.height <| toString tilesize
-      , Svg.Attributes.xlinkHref "/img/warrior128.png"
-      ]
-      []
-    else
-      Svg.text' [] [ Svg.text "" ]
   ]
 
 
@@ -128,27 +106,7 @@ view ctx grid =
     [ Svg.g
       [ transform ]
       (List.indexedMap (viewRow ctx) (Array.toList grid))
-    , Svg.polyline
-      [ Svg.Attributes.fill "none"
-      , Svg.Attributes.stroke "black"
-      , Svg.Attributes.strokeWidth "6"
-      , let
-          coords = [ (4, 4), (7, 1), (9, 6)]
-          points =
-            List.map
-              (\ (x, y) ->
-                 ( x * tilesize + tilesize // 2
-                 , y * tilesize + tilesize // 2
-                 )
-              )
-              coords
-          string =
-            (List.map (\ (x, y) -> toString x ++ "," ++ toString y) points)
-            |> String.join " "
-        in
-          Svg.Attributes.points string
-      ]
-      []
+    , Champ.view ctx.champ
     ]
 
 
