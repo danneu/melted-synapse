@@ -13,7 +13,8 @@ import Waypoint exposing (Waypoint)
 
 
 type alias Champ =
-  { position : (Int, Int)  -- x, y
+  { hp : (Int, Int) -- (currentHp, maxHp)
+  , position : (Int, Int)  -- x, y
   , waypoints : List Waypoint
   }
 

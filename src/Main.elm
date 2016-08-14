@@ -41,8 +41,9 @@ type alias Model =
   , position : Mouse.Position
   , drag : Maybe Drag
   , scale : Float
-  , champ : Champ
+  , champ: Champ
   , selection : Selection
+  --, hoveredTile : (Int, Int) -- x,y
   , keyboard : KE.Model
   }
 
@@ -56,7 +57,8 @@ init =
     cols = 15
     (kbModel, kbCmd) = KE.init
     champ =
-      { position = (4, 4)
+      { hp = (100, 100)
+      , position = (4, 4)
       , waypoints =
         [ { position = (7, 1) }
         , { position = (9, 6) }
