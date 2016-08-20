@@ -78,25 +78,25 @@ init =
     champ1 =
       { name = "champ1"
       , hp = (100, 100)
-      , position = (8.5, 2.5)
+      , position = (6, 0)
       , speed = 2
       , angle = 0
       , waypoints =
-        [ { position = (4, 2) }
-        , { position = (6, 4) }
+        [ { position = (6, 2) }
+        , { position = (5, 4) }
         ]
       }
       |> Champ.faceWaypoint
     champ2 =
       { name = "champ2"
       , hp = (100, 100)
-      , position = (2, 7)
+      , position = (2.5, 6.5)
       , speed = 2
       , angle = 0
       , waypoints =
-        [ { position = (3, 6) }
+        [ { position = (4, 5) }
+        , { position = (5, 6) }
         , { position = (4, 7) }
-        , { position = (3, 8) }
         ]
       }
       |> Champ.faceWaypoint
@@ -460,11 +460,7 @@ view model =
         ]
         []
       ]
-    , Html.p
-      [ Html.Attributes.style [ ("margin", "10px") ]
-      ]
-      [ viewTickScrubber model
-      ]
+    , viewTickScrubber model
     -- Only show instructions if in planning mode
     , case model.mode of
         Planning _ ->
@@ -503,10 +499,7 @@ viewTickScrubber model =
       Html.text ""
     Simulating _ idx _ ->
       Html.div
-        [ Html.Attributes.style
-            [ ("margin-left", "50px")
-            , ("margin-right", "50px")
-            ]
+        [ Html.Attributes.style [ ("margin", "10px 50px 10px 10px") ]
         ]
         [ Html.input
           [ Html.Attributes.type' "range"
@@ -529,6 +522,9 @@ viewTickScrubber model =
               )
               [0..179]
           )
+        , Html.p
+          []
+          [ Html.text "Drag the slider to scrub through history" ]
         ]
 
 
