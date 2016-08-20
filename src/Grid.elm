@@ -67,13 +67,16 @@ viewTile ctx y x tile =
     -- , Svg.Events.onMouseOver (ctx.onMouseOver x y)
     ]
     []
-  , Svg.text'
-      [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
-      , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
-      , Svg.Attributes.class "no-select"
-      , Svg.Attributes.fill "#ccb3c9"
-      ]
-      [ Svg.text <| toString (x, y) ]
+  , if ctx.showCoords then
+      Svg.text'
+        [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
+        , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
+        , Svg.Attributes.class "no-select"
+        , Svg.Attributes.fill "#ccb3c9"
+        ]
+        [ Svg.text <| toString (x, y) ]
+    else
+      Svg.text ""
   ]
 
 
@@ -140,4 +143,5 @@ type alias Context msg =
   , champs : Dict String Champ
   , selectedChamp : Maybe Champ
   , selectedWaypoint : Maybe Waypoint
+  , showCoords : Bool
   }

@@ -63,6 +63,7 @@ type alias Model =
   , mode : Mode
   , selection : Selection
   , keyboard : KE.Model
+  , showCoords : Bool
   }
 
 
@@ -114,6 +115,7 @@ init =
     , mode = Planning champs
     , keyboard = kbModel
     , selection = ChampSelected champ1
+    , showCoords = False
     }
   , Cmd.map Keyboard kbCmd
   )
@@ -142,6 +144,8 @@ type Msg
   -- ZOOM
   | ZoomIn
   | ZoomOut
+  -- DEBUG
+  | ToggleCoords
 
 
 
@@ -335,6 +339,11 @@ update msg model =
       { model
           | scale = Basics.max 0 (model.scale - 0.1)
       } ! [Cmd.none]
+    -- DEBUG
+    ToggleCoords ->
+      { model
+          | showCoords = not model.showCoords
+      } ! [Cmd.none]
 
 
 
@@ -400,6 +409,8 @@ view model =
         , onWaypointClick = WaypointClick
         , onMouseDown =
             Html.Events.on "mousedown" (JD.map DragStart Mouse.position)
+        , showCoords =
+            model.showCoords
         }
     in
       Grid.view ctx model.grid
@@ -437,6 +448,17 @@ view model =
         ]
         [ Html.text "danneu/melted-synapse" ]
       ]
+    , Html.p
+      []
+      [ Html.text "Show coords: "
+      , Html.input
+        [ Html.Attributes.type' "checkbox"
+        , Html.Events.onCheck (\_ -> ToggleCoords)
+        , Html.Attributes.checked model.showCoords
+        ]
+        []
+      ]
+
     , Html.ul
       []
       [ Html.li
