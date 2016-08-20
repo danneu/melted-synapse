@@ -49,7 +49,10 @@ viewTile ctx y x tile =
      , Svg.Attributes.y (toString (y * tilesize))
      , Svg.Attributes.width <| toString tilesize
      , Svg.Attributes.height <| toString tilesize
-     , Svg.Attributes.xlinkHref "./img/grass1.gif"
+     , let
+         src = "./map/map_tile_" ++ toString x ++ "_" ++ toString y ++ ".png"
+       in
+         Svg.Attributes.xlinkHref src
      ]
      []
   , Svg.rect
@@ -68,6 +71,7 @@ viewTile ctx y x tile =
       [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
       , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
       , Svg.Attributes.class "no-select"
+      , Svg.Attributes.fill "#ccb3c9"
       ]
       [ Svg.text <| toString (x, y) ]
   ]

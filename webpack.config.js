@@ -98,6 +98,10 @@ if (TARGET_ENV === 'production') {
           to: 'img/',
           ignore: ['pxm/*']
         },
+        {
+          from: 'static/map/',
+          to: 'map/'
+        },
         { from: 'static/favicon.ico' },
       ], {
         ignore: [

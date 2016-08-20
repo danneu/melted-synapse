@@ -71,18 +71,18 @@ type alias Model =
 init : (Model, Cmd Msg)
 init =
   let
-    rows = 10
-    cols = 15
+    rows = 13
+    cols = 13
     (kbModel, kbCmd) = KE.init
     champ1 =
       { name = "champ1"
       , hp = (100, 100)
-      , position = (4.5, 4.5)
+      , position = (8.5, 2.5)
       , speed = 2
       , angle = 0
       , waypoints =
-        [ { position = (7, 1) }
-        , { position = (9, 6) }
+        [ { position = (4, 2) }
+        , { position = (6, 4) }
         ]
       }
       |> Champ.faceWaypoint
