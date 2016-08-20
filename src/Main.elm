@@ -429,7 +429,9 @@ view model =
     --   [ Html.Events.onClick SimulateRound ]
     --   [ Html.text "Simulate" ]
     , Html.button
-      [ Html.Events.onClick ToggleMode ]
+      [ Html.Events.onClick ToggleMode
+      , Html.Attributes.class "btn-primary"
+      ]
       [ Html.text
           <| case model.mode of
             Planning _ -> "Planning Mode"
@@ -448,9 +450,9 @@ view model =
         ]
         [ Html.text "danneu/melted-synapse" ]
       ]
-    , Html.p
+    , Html.span
       []
-      [ Html.text "Show coords: "
+      [ Html.text " Show coords: "
       , Html.input
         [ Html.Attributes.type' "checkbox"
         , Html.Events.onCheck (\_ -> ToggleCoords)
@@ -458,29 +460,37 @@ view model =
         ]
         []
       ]
-
-    , Html.ul
-      []
-      [ Html.li
-        []
-        [ Html.text "Click a champ or waypoint to select it." ]
-      , Html.li
-        []
-        [ Html.text "Double-click an empty tile to add a waypoint for selected champ." ]
-      , Html.li
-        []
-        [ Html.text "Press escape to remove last waypoint for selected champ." ]
-      , Html.li
-        []
-        [ Html.text "Press spacebar to toggle from planning-mode into simulation-mode." ]
-      , Html.li
-        []
-        [ Html.text "Click and drag anywhere on the map to pan." ]
-      , Html.li
-        []
-        [ Html.text "You must be in planning-mode to modify waypoints." ]
+    , Html.p
+      [ Html.Attributes.style [ ("margin", "10px") ]
       ]
-    , viewTickScrubber model
+      [ viewTickScrubber model
+      ]
+    -- Only show instructions if in planning mode
+    , case model.mode of
+        Planning _ ->
+          Html.ul
+          []
+          [ Html.li
+            []
+            [ Html.text "Click a champ or waypoint to select it." ]
+          , Html.li
+            []
+            [ Html.text "Double-click an empty tile to add a waypoint for selected champ." ]
+          , Html.li
+            []
+            [ Html.text "Press escape to remove last waypoint for selected champ." ]
+          , Html.li
+            []
+            [ Html.text "Press spacebar to toggle from planning-mode into simulation-mode." ]
+          , Html.li
+            []
+            [ Html.text "Click and drag anywhere on the map to pan." ]
+          , Html.li
+            []
+            [ Html.text "You must be in planning-mode to modify waypoints." ]
+          ]
+        _ ->
+          Html.text ""
     ]
   ]
 
