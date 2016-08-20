@@ -2,13 +2,13 @@
 
 # melted-synapse
 
-- Live Demo: <https://www.danneu.com/melted-synapse/>
+- Live Demo: <https://www.danneu.com/melted-synapse/> (Press spacebar to simulate the turn)
 
 The start of a turn-based vaporware game written in Elm that explores some game
 mechanics I find interesting in [Frozen Synapse](http://www.frozensynapse.com/),
 like its tactical waypoint system and simultaneous turn resolution.
 
-![screenshot](https://dl.dropboxusercontent.com/spa/quq37nq1583x0lf/75nykunj.png)
+![screenshot](https://dl.dropboxusercontent.com/spa/quq37nq1583x0lf/zdif64w9.png)
 
 I like the idea of many players enqueuing actions for each of their soldiers
 at the same time (using waypoints). Once each player submits their waypoints
