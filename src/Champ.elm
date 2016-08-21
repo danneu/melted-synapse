@@ -265,9 +265,40 @@ view ctx champ =
               [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
               , Svg.Attributes.y (toString (y * tilesize + tilesize / 1))
               , Svg.Attributes.class "no-select"
-              , Svg.Attributes.fill "#cccccc"
+              , Svg.Attributes.fill "white"
               ]
               [ Svg.text text ]
+        -- Show champs' HP bar
+        , let
+            marginTop = -10
+            abc = 42
+            fullHeight = 10
+            fullWidth = tilesize
+            (currHp, maxHp) = champ.hp
+            padding = 2
+            currWidth = tilesize * (toFloat currHp / toFloat maxHp) - padding / 2
+          in
+            Svg.g
+            []
+            [ -- background
+              Svg.rect
+              [ Svg.Attributes.x (toString (x * tilesize))
+              , Svg.Attributes.y (toString (y * tilesize + marginTop))
+              , Svg.Attributes.width <| toString fullWidth
+              , Svg.Attributes.height <| toString fullHeight
+              , Svg.Attributes.fill "black"
+              ]
+              []
+              -- foreground
+            , Svg.rect
+              [ Svg.Attributes.x (toString (x * tilesize + padding / 2))
+              , Svg.Attributes.y (toString (y * tilesize + marginTop + padding / 2))
+              , Svg.Attributes.width <| toString currWidth
+              , Svg.Attributes.height <| toString (fullHeight - padding)
+              , Svg.Attributes.fill "#00ff00"
+              ]
+              []
+            ]
         ]
         (List.map (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
       )
