@@ -164,7 +164,7 @@ actionToEmoji action =
     AutoAttacking _ _ ->
       "⚔"
     Dead ->
-      "☠"
+      "⚰"
 
 
 viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
@@ -385,7 +385,7 @@ view ctx champ =
               , Svg.Attributes.fill "white"
               , Svg.Attributes.class "no-select"
               ]
-              [ Svg.text (champ.name ++ actionToEmoji champ.action)
+              [ Svg.text (champ.name ++ " " ++ actionToEmoji champ.action)
               ]
               -- background
             , Svg.rect

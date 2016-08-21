@@ -14,7 +14,6 @@ import Array exposing (Array)
 import Json.Encode as JE
 import Json.Decode as JD
 import Time
-import Set
 -- 3rd
 import Keyboard.Extra as KE
 import List.Extra
