@@ -122,7 +122,11 @@ view ctx grid =
               , ticksPerRound = ctx.ticksPerRound
               }
             in
-              (List.map (Champ.view champCtx) (Dict.values ctx.champs))
+              ( List.map
+                (Champ.view champCtx)
+                -- Sort the dead champs first so they render behind alive champs
+                (Champ.sortDeadFirst (Dict.values ctx.champs))
+              )
           )
       )
     ]

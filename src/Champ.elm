@@ -68,6 +68,24 @@ faceVictim champ =
       champ
 
 
+sortDeadFirst : List Champ -> List Champ
+sortDeadFirst =
+  let
+    compare =
+      \a b ->
+        case (a.action, b.action) of
+          (Dead, Dead) ->
+            EQ
+          (Dead, _) ->
+            LT
+          (_, Dead) ->
+            GT
+          (_, _) ->
+            EQ
+  in
+    List.sortWith compare
+
+
 sufferDamage : Int -> Champ -> Champ
 sufferDamage damage champ =
   let
@@ -317,7 +335,9 @@ view ctx champ =
               , Svg.Attributes.y (toString (y * tilesize + marginTop - 5))
               , Svg.Attributes.fill "white"
               ]
-              [ Svg.text champ.name
+              [ Svg.text
+                  <| champ.name
+                     ++ if champ.action == Dead then " (dead)" else ""
               ]
               -- background
             , Svg.rect
