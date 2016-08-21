@@ -554,12 +554,6 @@ view model =
         []
       ]
     , Html.button
-      [ Html.Events.onClick ClearSelection ]
-      [ Html.text "Clear Selection" ]
-    -- , Html.button
-    --   [ Html.Events.onClick SimulateRound ]
-    --   [ Html.text "Simulate" ]
-    , Html.button
       [ Html.Events.onClick ToggleMode
       , Html.Attributes.class "btn-primary"
       ]

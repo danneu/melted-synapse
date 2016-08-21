@@ -70,6 +70,13 @@ view champ =
     []
     [ Html.text (Class.toEmoji champ.class ++ " " ++ champ.name)
     ]
+  , Html.p
+    []
+    [ Html.text
+        ("Status: " ++ Champ.statusToEmoji champ.status ++
+         " " ++ Champ.statusToSimpleName champ.status
+        )
+    ]
   -- List champ's waypoints for easy navigation
   , Html.h3 [] [ Html.text "Waypoints" ]
   , if List.isEmpty champ.waypoints then

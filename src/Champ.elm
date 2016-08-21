@@ -164,6 +164,19 @@ statusToEmoji status =
       "⚰"
 
 
+statusToSimpleName : Status -> String
+statusToSimpleName status =
+  case status of
+    Idling ->
+      "Idling"
+    Moving ->
+      "Moving"
+    AutoAttacking _ _ ->
+      "Auto-Attacking"
+    Dead ->
+      "Dead"
+
+
 viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
 viewWaypoint maybeWaypoint onWaypointClick waypoint =
   let
