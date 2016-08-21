@@ -1,0 +1,1 @@
+body{padding-top:25px;font-size:16px;background-color:#231d2b}.tile-map{position:fixed;top:0;left:0;height:100%;width:100%;z-index:-1}.no-select{pointer-events:none}#sidebar,.no-select{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}#sidebar{position:absolute;bottom:0;height:200px;width:100%;border-left:1px solid #000;background-color:#ccc}
