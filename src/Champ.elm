@@ -271,8 +271,7 @@ view ctx champ =
         -- Show champs' HP bar
         , let
             marginTop = -10
-            abc = 42
-            fullHeight = 10
+            fullHeight = 6
             fullWidth = tilesize
             (currHp, maxHp) = champ.hp
             padding = 2
@@ -287,6 +286,8 @@ view ctx champ =
               , Svg.Attributes.width <| toString fullWidth
               , Svg.Attributes.height <| toString fullHeight
               , Svg.Attributes.fill "black"
+              , Svg.Attributes.stroke "black"
+              , Svg.Attributes.strokeWidth "2"
               ]
               []
               -- foreground
