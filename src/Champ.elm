@@ -28,14 +28,16 @@ type Action
 
 type alias Champ =
   { name : String
-  , hp : (Int, Int) -- (currentHp, maxHp)
+    -- roundDelta stores the champ's change in health for the current round.
+    -- It's displayed in the health bar and should be reset before every round.
+  , hp : (Int, Int, Int) -- (currentHp, maxHp, roundDelta)
   , position : (Float, Float)  -- x, y
   , waypoints : List Waypoint
   , speed : Float -- meters aka tiles per second
   , angle : Float
-  -- Holds set of enemy champ names that this champ has autoattacked in
-  -- the current round to ensure that a champ only autoattacks another champ
-  -- once per round.
+    -- Holds set of enemy champ names that this champ has autoattacked in
+    -- the current round to ensure that a champ only autoattacks another champ
+    -- once per round.
   , autoattacked : Set String
   , action : Action
   }
@@ -89,7 +91,7 @@ sortDeadFirst =
 sufferDamage : Int -> Champ -> Champ
 sufferDamage damage champ =
   let
-    (currHp, maxHp) =
+    (currHp, maxHp, delta) =
       champ.hp
     currHp' =
       currHp - damage
@@ -100,7 +102,7 @@ sufferDamage damage champ =
         champ.action
   in
     { champ
-        | hp = (currHp', maxHp)
+        | hp = (currHp', maxHp, max -currHp -damage)
         , action = action'
     }
 
@@ -110,12 +112,15 @@ sufferDamage damage champ =
 -- TODO: Probably means this state should live in Round.elm.
 roundReset : Champ -> Champ
 roundReset champ =
-  { champ
-      -- the autoattacked set only exists to ensure a champ only attacks
-      -- another enemy once per round, so it gets cleared each round.
-      | autoattacked =
-          Set.empty
-  }
+  let
+    (currHp, maxHp, _) = champ.hp
+  in
+    { champ
+        -- the autoattacked set only exists to ensure a champ only attacks
+        -- another enemy once per round, so it gets cleared each round.
+        | autoattacked = Set.empty
+        , hp = (currHp, maxHp, 0)
+    }
 
 
 -- VIEW
@@ -321,10 +326,17 @@ view ctx champ =
             marginTop = -10
             fullHeight = 6
             fullWidth = tilesize
-            (currHp, maxHp) = champ.hp
-            padding = 2
+            (currHp, maxHp, deltaHp) = champ.hp
             currWidth =
-              max 0 (tilesize * (toFloat currHp / toFloat maxHp) - padding / 2)
+              (round (tilesize * (toFloat currHp / toFloat maxHp)))
+              |> min (round tilesize)
+              |> max 0
+            deltaWidth =
+              --(toFloat currWidth) + abs (toFloat deltaHp) - (padding / 2)
+              (round (tilesize * (toFloat (max 0 currHp + abs deltaHp) / toFloat maxHp)))
+              |> min (round tilesize)
+              |> max 0
+            --_ = Debug.log "currW, delatW" (currWidth, deltaWidth)
           in
             Svg.g
             []
@@ -347,16 +359,26 @@ view ctx champ =
               , Svg.Attributes.height <| toString fullHeight
               , Svg.Attributes.fill "black"
               , Svg.Attributes.stroke "black"
-              , Svg.Attributes.strokeWidth "2"
+              , Svg.Attributes.strokeWidth "3"
               ]
               []
-              -- foreground
+              -- foreground (deltaHp)
             , Svg.rect
-              [ Svg.Attributes.x (toString (x * tilesize + padding / 2))
-              , Svg.Attributes.y (toString (y * tilesize + marginTop + padding / 2))
+              [ Svg.Attributes.x (toString (x * tilesize))
+              , Svg.Attributes.y (toString (y * tilesize + marginTop))
+              , Svg.Attributes.width <| toString deltaWidth
+              , Svg.Attributes.height <| toString fullHeight
+              , Svg.Attributes.fill
+                   (if deltaHp < 0 then "red" else "#00ff00")
+              ]
+              []
+              -- foreground (currHp)
+            , Svg.rect
+              [ Svg.Attributes.x (toString (x * tilesize))
+              , Svg.Attributes.y (toString (y * tilesize + marginTop))
               , Svg.Attributes.width <| toString currWidth
-              , Svg.Attributes.height <| toString (fullHeight - padding)
-              , Svg.Attributes.fill "#00ff00"
+              , Svg.Attributes.height <| toString fullHeight
+              , Svg.Attributes.fill "#0000ff"
               ]
               []
             ]
