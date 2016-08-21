@@ -594,7 +594,8 @@ viewTickScrubber model =
             currLog : List (Int, String)
             currLog =
               Array.toList round.ticks
-              |> List.take (idx + 1)
+              -- Only show the log messages that have happened before curr tick
+              --|> List.take (idx + 1)
               |> List.concatMap
                    (\ {id, log} ->
                       List.map (\msg -> (id, msg)) log
@@ -602,7 +603,10 @@ viewTickScrubber model =
             viewLogItem =
               \ (id, msg) ->
                 Html.li
-                []
+                [ Html.Attributes.style
+                    [ ("opacity", if id <= tick.id then "1.0" else "0.5")
+                    ]
+                ]
                 [ Html.button
                   [ Html.Events.onClick (GoToTick id) ]
                   [ Html.text ("Tick " ++ toString id ) ]
