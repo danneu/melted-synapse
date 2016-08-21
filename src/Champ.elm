@@ -13,6 +13,7 @@ import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
 import Constants exposing (tilesize)
 import Action exposing (Action)
+import Class exposing (Class)
 
 
 type Status
@@ -37,6 +38,7 @@ type alias Champ =
   , speed : Float -- meters aka tiles per second
   , angle : Float
   , status : Status
+  , class : Class
   }
 
 
@@ -50,6 +52,7 @@ init name position (currHp, maxHp) =
   , speed = 2
   , angle = 0
   , waypoints = []
+  , class = Class.Warrior Nothing
   }
 
 
@@ -156,7 +159,7 @@ statusToEmoji status =
     Moving ->
       "⏩️"
     AutoAttacking _ _ ->
-      "⚔"
+      "👊" --"⚔"
     Dead ->
       "⚰"
 

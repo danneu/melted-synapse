@@ -5,7 +5,6 @@ module WaypointDetail exposing (..)
 
 -- Elm
 import Html exposing (Html)
-import Html.Events
 -- 1st
 import Waypoint exposing (Waypoint)
 import Action exposing (Action)
@@ -15,6 +14,9 @@ import Vector
 -- MODEL
 
 
+-- TODO: Need to change this to champ so I can do stuff
+--       like Class.toEmoji champ.class. Failed attempt to
+--       just take only what I'd probably need.
 type alias Model =
   { champName : String
   , waypoint : Waypoint
@@ -90,14 +92,14 @@ view {champName, waypoint} =
       Html.ol
       []
       (List.map viewAction waypoint.actions)
-  , Html.p [] [ Html.text "Add an action" ]
-  , Html.ul
-    []
-    [ Html.li
-      []
-      [ Html.button
-        [ Html.Events.onClick (AddAction Action.Wait) ]
-        [ Html.text "Wait 1000ms" ]
-      ]
-    ]
+  -- , Html.p [] [ Html.text "Add an action" ]
+  -- , Html.ul
+  --   []
+  --   [ Html.li
+  --     []
+  --     [ Html.button
+  --       [ Html.Events.onClick (AddAction Action.Wait) ]
+  --       [ Html.text "Wait 1000ms" ]
+  --     ]
+  --   ]
   ]

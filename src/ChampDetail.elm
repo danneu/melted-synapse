@@ -9,6 +9,7 @@ import Html.Events
 -- 1st
 import Champ exposing (Champ)
 import Waypoint exposing (Waypoint)
+import Class
 
 
 -- MODEL
@@ -67,7 +68,7 @@ view champ =
   []
   [ Html.h2
     []
-    [ Html.text champ.name
+    [ Html.text (Class.toEmoji champ.class ++ " " ++ champ.name)
     ]
   -- List champ's waypoints for easy navigation
   , Html.h3 [] [ Html.text "Waypoints" ]

@@ -88,15 +88,15 @@ init =
         |> Champ.addWaypoint (6, 2) []
         |> Champ.addWaypoint (5, 5) []
       , Champ.init "champ2" (4, 2) (14, 100)
-        |> Champ.addWaypoint (7, 4) [Action.Wait]
+        |> Champ.addWaypoint (7, 4) []
       , Champ.init "champ3" (5, 8) (92, 100)
         |> Champ.addWaypoint (10, 9) []
       , Champ.init "champ4" (7, 8) (42, 100)
         |> Champ.addWaypoint (2, 9) []
       , Champ.init "champ5" (8, 9) (22, 100)
       , Champ.init "champ6" (10, 2) (100, 100)
-        |> Champ.addWaypoint (10, 3) [Action.Wait, Action.Wait]
-        |> Champ.addWaypoint (10, 5) [Action.Wait, Action.Wait]
+        |> Champ.addWaypoint (10, 3) []
+        |> Champ.addWaypoint (10, 5) []
       ]
       |> List.map (\ ({name} as champ) -> (name, champ))
       |> Dict.fromList
