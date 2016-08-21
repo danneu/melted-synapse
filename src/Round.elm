@@ -118,15 +118,15 @@ stepTick _  ticks =
       (Dict.foldl stepChamp prevChamps prevChamps) :: ticks
 
 
-simulate : Dict String Champ -> Array (Dict String Champ)
-simulate champs =
+simulate : Int -> Dict String Champ -> Array (Dict String Champ)
+simulate ticksPerRound champs =
   let
     -- first we reset the round-scoped state of each champ
     resetChamps =
       Dict.map (\_ champ -> Champ.roundReset champ) champs
   in
-    List.foldl stepTick [resetChamps] [1..180] -- i.e. do it 180 times
+    List.foldl stepTick [resetChamps] [1..ticksPerRound]
     |> List.reverse
-    -- Drop the final tick so we only have 180 ticks total
-    |> List.drop 1
+    -- Drop the final tick so we only have ticksPerRound quantity of ticks
+    |> List.take ticksPerRound
     |> Array.fromList

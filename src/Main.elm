@@ -48,7 +48,7 @@ type Playback
 
 type Mode
   = Planning (Dict String Champ)
-  -- Int is current tick (0 to 179)
+  -- Int is current tick (0 to ticksPerRound-1)
   -- Tick 0 is the original state pre-simulation which can be used to
   -- transition back into planning mode.
   | Simulating Playback Int (Array (Dict String Champ))
@@ -65,6 +65,7 @@ type alias Model =
   , selection : Selection
   , keyboard : KE.Model
   , showCoords : Bool
+  , ticksPerRound : Int
   }
 
 
@@ -109,7 +110,7 @@ init =
       { name = "champ3"
       , action = Champ.Moving
       , hp = (50, 100)
-      , position = (4, 8)
+      , position = (5, 8)
       , speed = 2
       , angle = 0
       , waypoints =
@@ -122,12 +123,23 @@ init =
       { name = "champ4"
       , action = Champ.Moving
       , hp = (92, 100)
-      , position = (8, 8)
+      , position = (7, 8)
       , speed = 2
       , angle = 0
       , waypoints =
         [ { position = (2, 9) }
         ]
+      , autoattacked = Set.empty
+      }
+      |> Champ.faceWaypoint
+    champ5 =
+      { name = "champ5"
+      , action = Champ.Idling
+      , hp = (22, 100)
+      , position = (8, 9)
+      , speed = 2
+      , angle = pi / 4
+      , waypoints = []
       , autoattacked = Set.empty
       }
       |> Champ.faceWaypoint
@@ -137,11 +149,13 @@ init =
         , (champ2.name, champ2)
         , (champ3.name, champ3)
         , (champ4.name, champ4)
+        , (champ5.name, champ5)
         ]
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
     , cols = cols
+    , ticksPerRound = 4 * 60 -- 4 seconds
     , position = Mouse.Position 50 50
     , drag = Nothing
     , scale = 0.80
@@ -272,7 +286,7 @@ update msg model =
           case model.mode of
             Planning champs ->
               --Simulating Paused 0 (Round.simulate champs)
-              Simulating Playing 0 (Round.simulate champs)
+              Simulating Playing 0 (Round.simulate model.ticksPerRound champs)
             Simulating _ _ ticks ->
               case Array.get 0 ticks of
                 Nothing ->
@@ -426,7 +440,7 @@ view model =
                   Just champs ->
                     champs
         , ticksPerRound =
-            180
+            model.ticksPerRound
         , tickIdx =
             case model.mode of
               Simulating _ idx _ ->
@@ -547,7 +561,7 @@ viewTickScrubber model =
         [ Html.input
           [ Html.Attributes.type' "range"
           , Html.Attributes.min "0"
-          , Html.Attributes.max "180"
+          , Html.Attributes.max (toString model.ticksPerRound)
           , Html.Attributes.value (toString idx)
           , Html.Attributes.list "tick-scrubber"
           , Html.Attributes.property "step" (JE.string "1")
@@ -563,7 +577,7 @@ viewTickScrubber model =
               (\n ->
                 (Html.option [] [ Html.text (toString n) ])
               )
-              [0..179]
+              [0..model.ticksPerRound-1]
           )
         , Html.p
           []
