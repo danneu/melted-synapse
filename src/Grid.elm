@@ -16,15 +16,11 @@ import Dict exposing (Dict)
 import Tile exposing (Tile)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
+import Constants exposing (tilesize)
 
 
 type alias Grid =
   Array (Array Tile)
-
-
-tilesize : Int
-tilesize =
-  64
 
 
 empty : Int -> Int -> Grid
@@ -42,8 +38,8 @@ viewTile ctx y x tile =
   ]
   [
     Svg.image
-     [ Svg.Attributes.x (toString (x * tilesize))
-     , Svg.Attributes.y (toString (y * tilesize))
+     [ Svg.Attributes.x (toString (toFloat x * tilesize))
+     , Svg.Attributes.y (toString (toFloat y * tilesize))
      , Svg.Attributes.width <| toString tilesize
      , Svg.Attributes.height <| toString tilesize
      , let
@@ -55,8 +51,8 @@ viewTile ctx y x tile =
   , Svg.rect
     [ Svg.Attributes.width (toString tilesize)
     , Svg.Attributes.height (toString tilesize)
-    , Svg.Attributes.x (toString (x * tilesize))
-    , Svg.Attributes.y (toString (y * tilesize))
+    , Svg.Attributes.x (toString (toFloat x * tilesize))
+    , Svg.Attributes.y (toString (toFloat y * tilesize))
     , Svg.Attributes.stroke "black"
     , Svg.Attributes.fill "none"
     -- , Svg.Events.onMouseOut (ctx.onMouseOver x y)
@@ -66,8 +62,8 @@ viewTile ctx y x tile =
     []
   , if ctx.showCoords then
       Svg.text'
-        [ Svg.Attributes.x (toString (x * tilesize + tilesize // 4))
-        , Svg.Attributes.y (toString (y * tilesize + tilesize // 2))
+        [ Svg.Attributes.x (toString (toFloat x * tilesize + tilesize / 4))
+        , Svg.Attributes.y (toString (toFloat y * tilesize + tilesize / 2))
         , Svg.Attributes.class "no-select"
         , Svg.Attributes.fill "#ccb3c9"
         ]

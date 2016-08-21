@@ -11,3 +11,8 @@ roundLengthInSeconds =
 ticksPerRound : Int
 ticksPerRound =
   round (roundLengthInSeconds * 60)
+
+
+tilesize : Float
+tilesize =
+  64

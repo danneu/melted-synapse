@@ -12,7 +12,7 @@ import Set exposing (Set)
 -- 1st
 import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
-import Constants
+import Constants exposing (tilesize)
 
 
 type Action
@@ -140,11 +140,6 @@ roundReset champ =
 
 
 -- VIEW
-
-
-tilesize : Float
-tilesize =
-  64
 
 
 actionToEmoji : Action -> String
@@ -304,17 +299,15 @@ view ctx champ =
                   "./img/tombstone.png"
             -- Scale the champ image to 128x128 instead of 64x64
             -- unless they are dead
-            (x', y', w', h') =
+            (x', y', side) =
               if champ.action == Dead then
                 ( x * tilesize
                 , y * tilesize
                 , tilesize
-                , tilesize
                 )
               else
-                ( x * tilesize - 64/2
-                , y * tilesize - 64/2
-                , tilesize * 2
+                ( x * tilesize - tilesize / 2
+                , y * tilesize - tilesize / 2
                 , tilesize * 2
                 )
 
@@ -322,8 +315,8 @@ view ctx champ =
             Svg.image
             [ Svg.Attributes.x (toString x')
             , Svg.Attributes.y (toString y')
-            , Svg.Attributes.width <| toString w'
-            , Svg.Attributes.height <| toString h'
+            , Svg.Attributes.width <| toString side
+            , Svg.Attributes.height <| toString side
             , Svg.Attributes.xlinkHref imageSrc
             , Svg.Attributes.transform transform
             , Svg.Events.onClick (ctx.onChampClick champ)
