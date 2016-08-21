@@ -27,11 +27,15 @@ type Action
   | RanAct RangerAction
 
 
+-- Starts at (1, tickDuration), ends at (tickDuration, tickDuration)
+type alias Duration =
+  (Int, Int)
+
+
 type WarriorAction
   = Charge Angle
-  | WarCry Angle
-  | AutoAttack
+  | WarCry Angle Duration
 
 
 type RangerAction
-  = Snipe Angle
+  = Snipe Angle Duration
