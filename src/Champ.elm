@@ -308,7 +308,7 @@ view ctx champ =
                   in
                     "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
                 Dead ->
-                  "./img/tombstone2.png"
+                  "./img/tombstone.png"
             -- Scale the champ image to 128x128 instead of 64x64
             -- unless they are dead
             (x', y', w', h') =
