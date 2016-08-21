@@ -12,6 +12,7 @@ import String
 import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
 import Constants exposing (tilesize)
+import Action exposing (Action)
 
 
 type Status
@@ -52,13 +53,17 @@ init name position (currHp, maxHp) =
   }
 
 
-addWaypoint : Vector -> Champ -> Champ
-addWaypoint position champ =
-  { champ
-      | waypoints = List.append champ.waypoints [Waypoint.empty position]
-      , status = Moving
-  }
-  |> faceWaypoint
+addWaypoint : Vector -> List Action -> Champ -> Champ
+addWaypoint position actions champ =
+  let
+    waypoint =
+      Waypoint.make position actions
+  in
+    { champ
+        | waypoints = List.append champ.waypoints [waypoint]
+        , status = Moving
+    }
+    |> faceWaypoint
 
 
 -- sets champ's angle based on next waypoint

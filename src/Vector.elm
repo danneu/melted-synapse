@@ -46,6 +46,11 @@ flipY (x, y) =
 
 
 -- radians
-angleTo : Vector -> Vector  -> Float
+angleTo : Vector -> Vector -> Float
 angleTo (x1, y1) (x2, y2) =
   atan2 (y2 - y1) (x2 - x1)
+
+
+toString : Vector -> String
+toString (x, y) =
+  "(" ++ (Basics.toString x) ++ ", " ++ (Basics.toString y) ++ ")"

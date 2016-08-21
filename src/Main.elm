@@ -18,12 +18,17 @@ import Time
 import Keyboard.Extra as KE
 import List.Extra
 -- 1st
+import Vector exposing (Vector)
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
 import Round exposing (Round)
 import Util.List
 import Constants
+import Action
+import Util
+import Sidebar
+import WaypointDetail
 
 
 -- MODEL
@@ -65,6 +70,7 @@ type alias Model =
   , selection : Selection
   , keyboard : KE.Model
   , showCoords : Bool
+  , sidebar : Sidebar.Model
   }
 
 
@@ -76,31 +82,24 @@ init =
     rows = 13
     cols = 13
     (kbModel, kbCmd) = KE.init
-    champ1 =
-      Champ.init "champ1" (6, 0) (75, 100)
-      |> Champ.addWaypoint (6, 2)
-      |> Champ.addWaypoint (5, 5)
-    champ2 =
-      Champ.init "champ2" (4, 2) (14, 100)
-      |> Champ.addWaypoint (7, 4)
-    -- champ3 and champ4 will run directly at each other
-    -- to demonstrate head-on champ collision (auto-attack each other)
-    champ3 =
-      Champ.init "champ3" (5, 8) (92, 100)
-      |> Champ.addWaypoint (10, 9)
-    champ4 =
-      Champ.init "champ4" (7, 8) (42, 100)
-      |> Champ.addWaypoint (2, 9)
-    champ5 =
-      Champ.init "champ5" (8, 9) (22, 100)
+    -- Seeding the game with some demo champs to play with
     champs =
-      Dict.fromList
-        [ (champ1.name, champ1)
-        , (champ2.name, champ2)
-        , (champ3.name, champ3)
-        , (champ4.name, champ4)
-        , (champ5.name, champ5)
-        ]
+      [ Champ.init "champ1" (6, 0) (75, 100)
+        |> Champ.addWaypoint (6, 2) []
+        |> Champ.addWaypoint (5, 5) []
+      , Champ.init "champ2" (4, 2) (14, 100)
+        |> Champ.addWaypoint (7, 4) [Action.Wait]
+      , Champ.init "champ3" (5, 8) (92, 100)
+        |> Champ.addWaypoint (10, 9) []
+      , Champ.init "champ4" (7, 8) (42, 100)
+        |> Champ.addWaypoint (2, 9) []
+      , Champ.init "champ5" (8, 9) (22, 100)
+      , Champ.init "champ6" (10, 2) (100, 100)
+        |> Champ.addWaypoint (10, 3) [Action.Wait, Action.Wait]
+        |> Champ.addWaypoint (10, 5) [Action.Wait, Action.Wait]
+      ]
+      |> List.map (\ ({name} as champ) -> (name, champ))
+      |> Dict.fromList
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
@@ -110,8 +109,10 @@ init =
     , scale = 0.80
     , mode = Planning champs
     , keyboard = kbModel
-    , selection = ChampSelected champ1
+    , selection =
+        ChampSelected (Util.forceUnwrap (List.head (Dict.values champs)))
     , showCoords = False
+    , sidebar = Sidebar.init
     }
   , Cmd.map Keyboard kbCmd
   )
@@ -143,6 +144,8 @@ type Msg
   | Zoom Float
   -- DEBUG
   | ToggleCoords
+  -- CHILDREN
+  | SidebarMsg Sidebar.Msg
 
 
 
@@ -160,14 +163,28 @@ update msg model =
         _ ->
           (model, Cmd.none)
     ChampClick champ ->
-      ( { model
-            | selection = ChampSelected champ
-        }
-      , Cmd.none
-      )
+      let
+        (sidebar', _) =
+          Sidebar.update (Sidebar.ChampSelected champ) model.sidebar
+      in
+        ( { model
+              | selection = ChampSelected champ
+              , sidebar = sidebar'
+          }
+        , Cmd.none
+        )
     WaypointClick champ waypoint ->
+      let
+        (sidebar', _) =
+          Sidebar.update
+            (Sidebar.WaypointSelected champ.name waypoint)
+            model.sidebar
+      in
       ( { model
-            | selection = WaypointSelected champ waypoint
+            | selection =
+                WaypointSelected champ waypoint
+            , sidebar =
+                sidebar'
         }
       , Cmd.none
       )
@@ -208,27 +225,39 @@ update msg model =
               { champ | waypoints = waypoints'
               }
               |> Champ.faceWaypoint
-            selection' =
+            (selection', sidebarMsg) =
               case List.Extra.last waypoints' of
                 Nothing ->
-                  ChampSelected champ'
+                  ( ChampSelected champ'
+                  , Sidebar.ChampSelected champ'
+                  )
                 Just waypoint ->
-                  WaypointSelected champ' waypoint
+                  ( WaypointSelected champ' waypoint
+                  , Sidebar.WaypointSelected champ'.name waypoint
+                  )
+            (sidebar', _) =
+              Sidebar.update sidebarMsg model.sidebar
             champs' =
               Dict.insert champ'.name champ' champs
           in
             ( { model
                   | mode = Planning champs'
                   , selection = selection'
+                  , sidebar = sidebar'
               }
             , Cmd.none
             )
     ClearSelection ->
-      ( { model
-            | selection = None
-        }
-      , Cmd.none
-      )
+      let
+        (sidebar', _) =
+          Sidebar.update Sidebar.Clear model.sidebar
+      in
+        ( { model
+              | selection = None
+              , sidebar = sidebar'
+          }
+        , Cmd.none
+        )
     Pause ->
       let
         mode' =
@@ -367,6 +396,72 @@ update msg model =
       { model
           | showCoords = not model.showCoords
       } ! [Cmd.none]
+    --
+    -- CHILDREN
+    --
+    SidebarMsg sidebarMsg ->
+      let
+        (sidebar', outMsg) =
+          Sidebar.update sidebarMsg model.sidebar
+        -- When the detail updates, the game select should, too
+        selection' =
+          -- If user is clearing the sidebar, then it doesn't make sense
+          -- to keep the selection
+          case sidebarMsg of
+            Sidebar.Clear ->
+              None
+            _ ->
+              case model.mode of
+                Planning champs ->
+                  case sidebar'.detail of
+                    Sidebar.ChampDetail champ ->
+                      ChampSelected champ
+                    Sidebar.WaypointDetail {champName, waypoint} ->
+                      WaypointSelected
+                        (Util.forceUnwrap (Dict.get champName champs))
+                        waypoint
+                    _ ->
+                      model.selection
+                _ ->
+                  model.selection
+        model' =
+          case outMsg of
+            Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateWaypoint champName waypoint) ->
+              updateWaypoint champName waypoint.position waypoint model
+            _ ->
+              model
+      in
+        ( { model'
+              | sidebar = sidebar'
+              , selection = selection'
+          }
+        , Cmd.none
+        )
+
+
+-- No-ops unless game is in planning mode
+-- Only allows for action updates for now
+updateWaypoint : String -> Vector -> Waypoint -> Model -> Model
+updateWaypoint champName position newWaypoint model =
+  case model.mode of
+    Planning champs ->
+      let
+        champ =
+          Util.forceUnwrap (Dict.get champName champs)
+        updater = \oldWaypoint ->
+          if oldWaypoint.position == position then
+            { oldWaypoint | actions = newWaypoint.actions }
+          else
+            oldWaypoint
+        champ' =
+          { champ | waypoints = List.map updater champ.waypoints }
+        champs' =
+          Dict.insert champName champ' champs
+      in
+        { model | mode = Planning champs' }
+    _ ->
+      model
+
 
 
 
@@ -443,8 +538,9 @@ view model =
         }
     in
       Grid.view ctx model.grid
+  , Html.App.map SidebarMsg (Sidebar.view model.sidebar)
   , Html.div
-    [ Html.Attributes.id "sidebar" ]
+    [ Html.Attributes.id "footerbar" ]
     [ Html.button
       [ Html.Events.onClick (Zoom 0.1) ]
       [ Html.span

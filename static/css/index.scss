@@ -26,7 +26,7 @@ body {
   user-select: none;
 }
 
-#sidebar {
+#footerbar {
   user-select: none;
   position: absolute;
   bottom: 0;
@@ -35,6 +35,19 @@ body {
   width: 100%;
   border-left: 1px solid black;
   background-color: #ccc;
+}
+
+#sidebar {
+  user-select: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 400px;
+  overflow-y: auto;
+  border-left: 1px solid black;
+  background-color: goldenrod;
+  padding: 10px;
 }
 
 

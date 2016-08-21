@@ -16,7 +16,8 @@ type alias Angle =
 --       enqueue Warrior actions?
 type Action
   -- GENERAL
-  = Wait Time
+  --= Wait Time
+  = Wait
   -- WARRIOR
   --| Cleave Angle
   --| WarCry Angle

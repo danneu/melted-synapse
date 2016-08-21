@@ -10,12 +10,19 @@ import Action exposing (Action)
 
 type alias Waypoint =
   { position : Vector
-  , queue : List Action
+  , actions : List Action
   }
 
 
 empty : Vector -> Waypoint
 empty position =
   { position = position
-  , queue = []
+  , actions = []
+  }
+
+
+make : Vector -> List Action -> Waypoint
+make position actions =
+  { position = position
+  , actions = actions
   }
