@@ -146,6 +146,8 @@ view ctx champ =
           [ Svg.Attributes.fill "none"
           , Svg.Attributes.stroke "black"
           , Svg.Attributes.strokeWidth "6"
+          , Svg.Attributes.strokeOpacity
+              (if champIsSelected then "1.0" else "0.3")
           , let
               points =
                 List.map

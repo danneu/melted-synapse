@@ -151,11 +151,13 @@ init =
         , (champ4.name, champ4)
         , (champ5.name, champ5)
         ]
+    roundLengthInSeconds =
+      4.0
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
     , cols = cols
-    , ticksPerRound = 4 * 60 -- 4 seconds
+    , ticksPerRound = round (roundLengthInSeconds * 60)
     , position = Mouse.Position 50 50
     , drag = Nothing
     , scale = 0.80
@@ -475,10 +477,16 @@ view model =
     [ Html.Attributes.id "sidebar" ]
     [ Html.button
       [ Html.Events.onClick ZoomIn ]
-      [ Html.text "Zoom In" ]
+      [ Html.span
+        [ Html.Attributes.class "glyphicon glyphicon-zoom-in" ]
+        []
+      ]
     , Html.button
       [ Html.Events.onClick ZoomOut ]
-      [ Html.text "Zoom Out" ]
+      [ Html.span
+        [ Html.Attributes.class "glyphicon glyphicon-zoom-out" ]
+        []
+      ]
     , Html.button
       [ Html.Events.onClick ClearSelection ]
       [ Html.text "Clear Selection" ]
