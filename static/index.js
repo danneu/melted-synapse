@@ -16,6 +16,7 @@ require('./css/index.scss')
 
 // once the javascript payload is loaded, restyle the loading text
 document.getElementById('main').innerHTML =
+  '<div class="spinner">Spinner</div>' +
   '<p style="color: white;" class="lead text-center">' +
   '  Loading... <span id="progress"></span>' +
   '</p>'
