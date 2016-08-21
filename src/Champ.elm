@@ -14,13 +14,13 @@ import Vector exposing (Vector)
 import Constants exposing (tilesize)
 
 
-type Action
+type Status
   -- Champ is just standing there (no waypoints)
   = Idling
   -- Champ is on the move towards its next waypoint
   | Moving
   -- Champ is in the middle of its autoattack animation
-  -- Holds the current tick and the total tick count of the action
+  -- Holds the current tick and the total tick count of the status
   -- and also holds the target champ
   | AutoAttacking (Int, Int) Champ
   | Dead
@@ -35,7 +35,7 @@ type alias Champ =
   , waypoints : List Waypoint
   , speed : Float -- meters aka tiles per second
   , angle : Float
-  , action : Action
+  , status : Status
   }
 
 
@@ -43,7 +43,7 @@ type alias Champ =
 init : String -> Vector -> (Int, Int) -> Champ
 init name position (currHp, maxHp) =
   { name = name
-  , action = Idling
+  , status = Idling
   , hp = (currHp, maxHp, 0)
   , position = position
   , speed = 2
@@ -56,7 +56,7 @@ addWaypoint : Vector -> Champ -> Champ
 addWaypoint position champ =
   { champ
       | waypoints = List.append champ.waypoints [Waypoint position]
-      , action = Moving
+      , status = Moving
   }
   |> faceWaypoint
 
@@ -79,7 +79,7 @@ faceWaypoint champ =
 -- Makes champ face its attack victim if there is one
 faceVictim : Champ -> Champ
 faceVictim champ =
-  case champ.action of
+  case champ.status of
     AutoAttacking _ enemy ->
       { champ
           | angle = Vector.angleTo champ.position enemy.position
@@ -94,7 +94,7 @@ sortDeadFirst =
   let
     compare =
       \a b ->
-        case (a.action, b.action) of
+        case (a.status, b.status) of
           (Dead, Dead) ->
             EQ
           (Dead, _) ->
@@ -115,15 +115,15 @@ sufferDamage damage champ =
       champ.hp
     currHp' =
       currHp - damage
-    action' =
+    status' =
       if currHp' <= 0 then
         Dead
       else
-        champ.action
+        champ.status
   in
     { champ
         | hp = (currHp', maxHp, max (delta - currHp) (delta - damage))
-        , action = action'
+        , status = status'
     }
 
 
@@ -143,9 +143,9 @@ roundReset champ =
 -- VIEW
 
 
-actionToEmoji : Action -> String
-actionToEmoji action =
-  case action of
+statusToEmoji : Status -> String
+statusToEmoji status =
+  case status of
     Idling ->
       "⌛"
     Moving ->
@@ -252,7 +252,7 @@ view ctx champ =
         , let
             degrees =
               -- Don't rotate the tombstone graphic
-              if champ.action == Dead then
+              if champ.status == Dead then
                 0
               else
                 (champ.angle * 180 / pi) + 90
@@ -265,7 +265,7 @@ view ctx champ =
             imageSrc =
               -- TODO: DRY or extract
               -- animSpeed 1.0 means play one loop of the animation per round
-              case champ.action of
+              case champ.status of
                 AutoAttacking (curr, duration) _ ->
                   let
                     animSpeed =
@@ -301,7 +301,7 @@ view ctx champ =
             -- Scale the champ image to 128x128 instead of 64x64
             -- unless they are dead
             (x', y', side) =
-              if champ.action == Dead then
+              if champ.status == Dead then
                 ( x * tilesize
                 , y * tilesize
                 , tilesize
@@ -350,7 +350,7 @@ view ctx champ =
               , Svg.Attributes.fill "white"
               , Svg.Attributes.class "no-select"
               ]
-              [ Svg.text (champ.name ++ " " ++ actionToEmoji champ.action)
+              [ Svg.text (champ.name ++ " " ++ statusToEmoji champ.status)
               ]
               -- background
             , Svg.rect

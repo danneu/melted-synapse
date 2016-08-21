@@ -38,18 +38,18 @@ stepChamp name _ (log, dict) =
           champ
   in
     -- Skip champ is they are dead
-    if champ0.action == Champ.Dead then
+    if champ0.status == Champ.Dead then
       (log, dict)
     else
     let
       -- 1. Move the champ (champ0 -> champ1)
       champ1 =
-        case champ0.action of
+        case champ0.status of
           Champ.Moving ->
             case champ0.waypoints of
               -- idle when we run out of waypoints
               [] ->
-                { champ0 | action = Champ.Idling }
+                { champ0 | status = Champ.Idling }
               waypoint :: rest ->
                 -- consume waypoint if champ is on it, else move champ towards it
                   if Vector.dist champ0.position waypoint.position < champ0.speed * 1/60 then
@@ -73,14 +73,14 @@ stepChamp name _ (log, dict) =
             champ0
       -- 2. Check and advance auto-attack  (champ1 -> champ2)
       (champ2, maybeVictim) =
-        case champ1.action of
+        case champ1.status of
           -- Champ is in the middle of an auto-attack, so advance it.
           -- If it's finished, then transition to another state.
           Champ.AutoAttacking (currTick, tickDuration) victim ->
             let
               currTick' =
                 currTick + 1
-              action' =
+              status' =
                 if currTick' <= tickDuration then
                   -- still autoattacking
                   let
@@ -99,7 +99,7 @@ stepChamp name _ (log, dict) =
                   else
                     Champ.Moving
             in
-              ( { champ1 | action = action' }
+              ( { champ1 | status = status' }
                 -- Point champ at victim every frame
                 |> Champ.faceVictim
               , Nothing
@@ -116,7 +116,7 @@ stepChamp name _ (log, dict) =
                       -- ignore self
                       champ1.name /= other.name
                       -- ignore dead champs
-                      && other.action /= Champ.Dead
+                      && other.status /= Champ.Dead
                       -- ignore champs out of range
                       && (Vector.dist champ1.position other.position) <= autoattackRange
                   )
@@ -127,7 +127,7 @@ stepChamp name _ (log, dict) =
                   (champ1, Nothing)
                 Just enemy ->
                   ( { champ1
-                      | action =
+                      | status =
                           Champ.AutoAttacking (1, 60) enemy
                     }
                     |> Champ.faceVictim
@@ -139,8 +139,8 @@ stepChamp name _ (log, dict) =
         Maybe.map (Champ.sufferDamage 25) maybeVictim
       log' =
         case maybeVictim' of
-          Just {name, action} ->
-            case action of
+          Just {name, status} ->
+            case status of
               Champ.Dead ->
                 List.append log [champ0.name ++ " killed " ++ name]
               _ ->
