@@ -298,7 +298,7 @@ view ctx champ =
               , Svg.Attributes.fill "white"
               ]
               [ Svg.text text ]
-        -- Show champs' HP bar
+        -- Show champ name and HP bar
         , let
             marginTop = -10
             fullHeight = 6
@@ -310,8 +310,17 @@ view ctx champ =
           in
             Svg.g
             []
-            [ -- background
-              Svg.rect
+            [
+              -- name
+              Svg.text'
+              [ Svg.Attributes.x (toString (x * tilesize))
+              , Svg.Attributes.y (toString (y * tilesize + marginTop - 5))
+              , Svg.Attributes.fill "white"
+              ]
+              [ Svg.text champ.name
+              ]
+              -- background
+            , Svg.rect
               [ Svg.Attributes.x (toString (x * tilesize))
               , Svg.Attributes.y (toString (y * tilesize + marginTop))
               , Svg.Attributes.width <| toString fullWidth
