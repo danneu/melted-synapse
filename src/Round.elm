@@ -25,8 +25,7 @@ type alias Round =
   }
 
 
--- TODO: This is getting really nasty. I'd like to accumulate
---       more novelty before trying to abstract it, though.
+-- TODO: This is getting really nasty.
 stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
 stepChamp name _ (log, dict) =
   let
@@ -117,8 +116,8 @@ stepChamp name _ (log, dict) =
                   ( \other ->
                       -- ignore self
                       champ1.name /= other.name
-                      -- ignore champs we've already autoattacked
-                      && not (Set.member other.name champ1.autoattacked)
+                      -- ignore dead champs
+                      && other.action /= Champ.Dead
                       -- ignore champs out of range
                       && (Vector.dist champ1.position other.position) <= autoattackRange
                   )
@@ -129,9 +128,7 @@ stepChamp name _ (log, dict) =
                   (champ1, Nothing)
                 Just enemy ->
                   ( { champ1
-                      | autoattacked =
-                          Set.insert enemy.name champ1.autoattacked
-                      , action =
+                      | action =
                           Champ.AutoAttacking (1, 60) enemy
                     }
                     |> Champ.faceVictim

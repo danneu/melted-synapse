@@ -35,10 +35,6 @@ type alias Champ =
   , waypoints : List Waypoint
   , speed : Float -- meters aka tiles per second
   , angle : Float
-    -- Holds set of enemy champ names that this champ has autoattacked in
-    -- the current round to ensure that a champ only autoattacks another champ
-    -- once per round.
-  , autoattacked : Set String
   , action : Action
   }
 
@@ -53,7 +49,6 @@ init name position (currHp, maxHp) =
   , speed = 2
   , angle = 0
   , waypoints = []
-  , autoattacked = Set.empty
   }
 
 
@@ -125,7 +120,7 @@ sufferDamage damage champ =
         champ.action
   in
     { champ
-        | hp = (currHp', maxHp, max -currHp -damage)
+        | hp = (currHp', maxHp, max (delta - currHp) (delta - damage))
         , action = action'
     }
 
@@ -139,10 +134,7 @@ roundReset champ =
     (currHp, maxHp, _) = champ.hp
   in
     { champ
-        -- the autoattacked set only exists to ensure a champ only attacks
-        -- another enemy once per round, so it gets cleared each round.
-        | autoattacked = Set.empty
-        , hp = (currHp, maxHp, 0)
+        | hp = (currHp, maxHp, 0)
     }
 
 

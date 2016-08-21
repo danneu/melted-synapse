@@ -86,10 +86,10 @@ init =
     -- champ3 and champ4 will run directly at each other
     -- to demonstrate head-on champ collision (auto-attack each other)
     champ3 =
-      Champ.init "champ3" (5, 8) (50, 100)
+      Champ.init "champ3" (5, 8) (92, 100)
       |> Champ.addWaypoint (10, 9)
     champ4 =
-      Champ.init "champ4" (7, 8) (92, 100)
+      Champ.init "champ4" (7, 8) (42, 100)
       |> Champ.addWaypoint (2, 9)
     champ5 =
       Champ.init "champ5" (8, 9) (22, 100)
