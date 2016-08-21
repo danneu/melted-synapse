@@ -6,7 +6,6 @@ module Round exposing (..)
 -- Elm
 import Dict exposing (Dict)
 import Array exposing (Array)
-import Set
 -- 1st
 import Champ exposing (Champ)
 import Vector

@@ -43,7 +43,8 @@ viewTile ctx y x tile =
      , Svg.Attributes.width <| toString tilesize
      , Svg.Attributes.height <| toString tilesize
      , let
-         src = "./map/map_tile_" ++ toString x ++ "_" ++ toString y ++ ".png"
+         src =
+           "./map/map_tile_" ++ toString x ++ "_" ++ toString y ++ ".png"
        in
          Svg.Attributes.xlinkHref src
      ]
@@ -56,7 +57,6 @@ viewTile ctx y x tile =
     , Svg.Attributes.stroke "black"
     , Svg.Attributes.fill "none"
     -- , Svg.Events.onMouseOut (ctx.onMouseOver x y)
-
     -- , Svg.Events.onMouseOver (ctx.onMouseOver x y)
     ]
     []
@@ -97,12 +97,6 @@ view ctx grid =
     Svg.svg
     [ Svg.Attributes.class "tile-map"
     , ctx.onMouseDown
-    -- , Html.Attributes.style
-    --     [ ( "background-position",
-    --         (toString <| ctx.offset.x // -2) ++ "px "
-    --         ++ (toString <| ctx.offset.y // -2) ++ "px"
-    --       )
-    --     ]
     ]
     [ Svg.g
       [ transform ]
@@ -133,7 +127,6 @@ type alias Context msg =
   , onChampClick : (Champ -> msg)
   , onWaypointClick : (Champ -> Waypoint -> msg)
   , onMouseDown : Html.Attribute msg
-    --, onMouseOver : (Int -> Int -> msg)
   , offset : Mouse.Position
   , rows : Int
   , cols : Int

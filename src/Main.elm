@@ -140,8 +140,7 @@ type Msg
   -- KEYBOARD
   | Keyboard KE.Msg
   -- ZOOM
-  | ZoomIn
-  | ZoomOut
+  | Zoom Float
   -- DEBUG
   | ToggleCoords
 
@@ -363,14 +362,12 @@ update msg model =
             ]
         )
     -- ZOOM
-    ZoomIn ->
-      { model
-          | scale = Basics.max 0 (model.scale + 0.1)
-      } ! [Cmd.none]
-    ZoomOut ->
-      { model
-          | scale = Basics.max 0 (model.scale - 0.1)
-      } ! [Cmd.none]
+    Zoom amount ->
+      ( { model
+            | scale = Basics.max 0 (model.scale + amount)
+        }
+      , Cmd.none
+      )
     -- DEBUG
     ToggleCoords ->
       { model
@@ -455,13 +452,13 @@ view model =
   , Html.div
     [ Html.Attributes.id "sidebar" ]
     [ Html.button
-      [ Html.Events.onClick ZoomIn ]
+      [ Html.Events.onClick (Zoom 0.1) ]
       [ Html.span
         [ Html.Attributes.class "glyphicon glyphicon-zoom-in" ]
         []
       ]
     , Html.button
-      [ Html.Events.onClick ZoomOut ]
+      [ Html.Events.onClick (Zoom -0.1) ]
       [ Html.span
         [ Html.Attributes.class "glyphicon glyphicon-zoom-out" ]
         []

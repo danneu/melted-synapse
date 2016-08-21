@@ -8,7 +8,6 @@ import Svg exposing (..)
 import Svg.Attributes
 import Svg.Events
 import String
-import Set exposing (Set)
 -- 1st
 import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
@@ -89,6 +88,7 @@ faceVictim champ =
       champ
 
 
+-- Sorting the dead champs first lets us render them behind the alive champs.
 sortDeadFirst : List Champ -> List Champ
 sortDeadFirst =
   let
@@ -107,6 +107,7 @@ sortDeadFirst =
     List.sortWith compare
 
 
+-- I think something higher level should be doing (affect champ1 champ2 attackType)
 sufferDamage : Int -> Champ -> Champ
 sufferDamage damage champ =
   let
@@ -322,28 +323,6 @@ view ctx champ =
             , Svg.Events.onClick (ctx.onChampClick champ)
             ]
             []
-
-        -- -- Show champ's current action
-        -- , let
-        --     text =
-        --       case champ.action of
-        --         Idling ->
-        --           "Idling"
-        --         Moving ->
-        --           "Moving"
-        --         AutoAttacking (curr, duration) _ ->
-        --           "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
-        --         Dead ->
-        --           ""
-        --   in
-        --     Svg.text'
-        --       [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
-        --       , Svg.Attributes.y (toString (y * tilesize + tilesize / 1))
-        --       , Svg.Attributes.class "no-select"
-        --       , Svg.Attributes.fill "white"
-        --       ]
-        --       [ Svg.text text ]
-
         -- Show champ name and HP bar
         , let
             marginTop = -10
@@ -351,15 +330,15 @@ view ctx champ =
             fullWidth = tilesize
             (currHp, maxHp, deltaHp) = champ.hp
             currWidth =
-              (round (tilesize * (toFloat currHp / toFloat maxHp)))
+              (tilesize * (toFloat currHp / toFloat maxHp))
+              |> round
               |> min (round tilesize)
               |> max 0
             deltaWidth =
-              --(toFloat currWidth) + abs (toFloat deltaHp) - (padding / 2)
-              (round (tilesize * (toFloat (max 0 currHp + abs deltaHp) / toFloat maxHp)))
+              (tilesize * (toFloat (max 0 currHp + abs deltaHp) / toFloat maxHp))
+              |> round
               |> min (round tilesize)
               |> max 0
-            --_ = Debug.log "currW, delatW" (currWidth, deltaWidth)
           in
             Svg.g
             []
@@ -405,7 +384,10 @@ view ctx champ =
               []
             ]
         ]
-        (List.map (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
+        ( List.map
+            (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ))
+            champ.waypoints
+        )
       )
 
 
