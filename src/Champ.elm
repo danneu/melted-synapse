@@ -203,17 +203,39 @@ view ctx champ =
               ++ String.join " " (List.map toString [degrees, originX, originY])
               ++ ")"
             imageSrc =
+              -- TODO: DRY or extract
+              -- animSpeed 1.0 means play one loop of the animation per round
               case champ.action of
                 AutoAttacking (curr, duration) _ ->
                   let
+                    animSpeed =
+                      1.0
                     frames =
                       9 -- frame count of animation
                     bucket =
-                      floor (toFloat (curr - 1) / (toFloat duration / frames))
+                      floor (toFloat (curr - 1) / (toFloat duration / frames / animSpeed)) % frames
                   in
                     "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
-                _ ->
-                  "./img/sprites/champ/idle.gif"
+                Moving ->
+                  let
+                    animSpeed =
+                      4.0
+                    frames =
+                      17
+                    bucket =
+                      floor (toFloat ctx.tickIdx / (toFloat ctx.ticksPerRound / frames / animSpeed)) % frames
+                  in
+                    "./img/sprites/champ/move_" ++ toString bucket ++ ".png"
+                Idling ->
+                  let
+                    animSpeed =
+                      2.0
+                    frames =
+                      17
+                    bucket =
+                      floor (toFloat ctx.tickIdx / (toFloat ctx.ticksPerRound / frames / animSpeed)) % frames
+                  in
+                    "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
           in
             -- Scale the champ image to 128x128 instead of 64x64
             Svg.image
@@ -256,4 +278,6 @@ type alias Context msg =
   , onWaypointClick : (Champ -> Waypoint -> msg)
   , selectedChamp : Maybe Champ
   , selectedWaypoint : Maybe Waypoint
+  , tickIdx : Int
+  , ticksPerRound : Int
   }

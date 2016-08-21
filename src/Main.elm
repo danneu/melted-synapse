@@ -260,9 +260,11 @@ update msg model =
           (model, Cmd.none)
         Simulating playback _ ticks ->
           let
+            maxIdx =
+              (Array.length ticks) - 1
             (playback', idx') =
-              if idx >= Array.length ticks then
-                (Paused, idx - 1)
+              if idx > maxIdx then
+                (Paused, maxIdx)
               else
                 (playback, idx)
             model' =
@@ -393,6 +395,14 @@ view model =
                     Debug.crash "Impossible"
                   Just champs ->
                     champs
+        , ticksPerRound =
+            180
+        , tickIdx =
+            case model.mode of
+              Simulating _ idx _ ->
+                idx
+              _ ->
+                0
         , selectedChamp =
             case model.selection of
               ChampSelected champ ->

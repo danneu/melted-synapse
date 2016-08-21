@@ -118,6 +118,8 @@ view ctx grid =
               , onWaypointClick = ctx.onWaypointClick
               , selectedChamp = ctx.selectedChamp
               , selectedWaypoint = ctx.selectedWaypoint
+              , tickIdx = ctx.tickIdx
+              , ticksPerRound = ctx.ticksPerRound
               }
             in
               (List.map (Champ.view champCtx) (Dict.values ctx.champs))
@@ -141,4 +143,6 @@ type alias Context msg =
   , selectedChamp : Maybe Champ
   , selectedWaypoint : Maybe Waypoint
   , showCoords : Bool
+  , tickIdx : Int
+  , ticksPerRound : Int
   }
