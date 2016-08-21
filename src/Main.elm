@@ -299,11 +299,6 @@ update msg model =
               }
           in
             (model', Cmd.none)
-    -- SimulateRound ->
-    --   let
-    --     _ = Debug.log "round" (Round.simulate model.champs)
-    --   in
-    --     (model, Cmd.none)
     -- DRAG
     DragStart xy ->
       { model
@@ -539,6 +534,14 @@ viewTickScrubber model =
     Planning _ ->
       Html.text ""
     Simulating playback idx round ->
+      let
+        tick =
+          case Array.get idx round.ticks of
+            Nothing ->
+              Debug.crash "Impossible"
+            Just tick ->
+              tick
+      in
       Html.div
         [ Html.Attributes.style [ ("margin", "10px 50px 10px 10px") ]
         ]
@@ -575,20 +578,41 @@ viewTickScrubber model =
             [ Html.text
                 (if idx == Constants.ticksPerRound - 1 then "Replay" else "Resume")
             ]
+        , Html.div
+          [ Html.Attributes.style [ ("display", "inline-block")
+                                  , ("margin-left", "10px")
+                                  ]
+          ]
+          [ Html.text ( "Round " ++ toString round.id ++
+                        ", Tick " ++ toString tick.id
+                      )
+          ]
         , Html.p
           []
           [ Html.text "Drag the slider to scrub through history" ]
           -- Display a log of events in the round as they happen
         , let
+            currLog : List (Int, String)
             currLog =
-              -- Not sure if I want an array or list
               Array.toList round.ticks
               |> List.take (idx + 1)
-              |> List.concatMap .log
+              |> List.concatMap
+                   (\ {id, log} ->
+                      List.map (\msg -> (id, msg)) log
+                   )
+            viewLogItem =
+              \ (id, msg) ->
+                Html.li
+                []
+                [ Html.button
+                  [ Html.Events.onClick (GoToTick id) ]
+                  [ Html.text ("Tick " ++ toString id ) ]
+                , Html.text (" " ++ msg)
+                ]
           in
             Html.ul
             []
-            (List.map (\msg -> Html.li [] [Html.text msg]) currLog)
+            (List.map viewLogItem currLog)
         ]
 
 
