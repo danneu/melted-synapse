@@ -181,7 +181,9 @@ type Msg
   | AddWaypoint Int Int Champ
   | RemoveWaypoint Champ
   | ClearSelection
-  --| SimulateRound
+  -- SIMULATION
+  | Pause
+  | Unpause
   | ToggleMode
   | GoToTick Int
   -- DRAG
@@ -282,6 +284,38 @@ update msg model =
         }
       , Cmd.none
       )
+    Pause ->
+      let
+        mode' =
+          case model.mode of
+            Simulating Playing idx ticks ->
+              Simulating Paused idx ticks
+            _ ->
+              model.mode
+      in
+        ( { model
+              | mode = mode'
+          }
+        , Cmd.none
+        )
+    Unpause ->
+      let
+        mode' =
+          case model.mode of
+            Simulating Paused idx ticks ->
+              -- Unpause replays from tick 0 if we're at the end
+              if idx == model.ticksPerRound - 1 then
+                Simulating Playing 0 ticks
+              else
+                Simulating Playing idx ticks
+            _ ->
+              model.mode
+      in
+        ( { model
+              | mode = mode'
+          }
+        , Cmd.none
+        )
     ToggleMode ->
       let
         mode' =
@@ -562,14 +596,14 @@ viewTickScrubber model =
   case model.mode of
     Planning _ ->
       Html.text ""
-    Simulating _ idx _ ->
+    Simulating playback idx _ ->
       Html.div
         [ Html.Attributes.style [ ("margin", "10px 50px 10px 10px") ]
         ]
         [ Html.input
           [ Html.Attributes.type' "range"
           , Html.Attributes.min "0"
-          , Html.Attributes.max (toString model.ticksPerRound)
+          , Html.Attributes.max (toString (model.ticksPerRound - 1))
           , Html.Attributes.value (toString idx)
           , Html.Attributes.list "tick-scrubber"
           , Html.Attributes.property "step" (JE.string "1")
@@ -587,6 +621,18 @@ viewTickScrubber model =
               )
               [0..model.ticksPerRound-1]
           )
+        , if playback == Playing then
+            Html.button
+            [ Html.Events.onClick Pause
+            ]
+            [ Html.text "Pause" ]
+          else
+            Html.button
+            [ Html.Events.onClick Unpause
+            ]
+            [ Html.text
+                (if idx == model.ticksPerRound - 1 then "Replay" else "Resume")
+            ]
         , Html.p
           []
           [ Html.text "Drag the slider to scrub through history" ]
