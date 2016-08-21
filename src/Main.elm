@@ -23,6 +23,7 @@ import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
 import Round exposing (Round)
 import Util.List
+import Constants
 
 
 -- MODEL
@@ -64,7 +65,6 @@ type alias Model =
   , selection : Selection
   , keyboard : KE.Model
   , showCoords : Bool
-  , ticksPerRound : Int
   }
 
 
@@ -101,13 +101,10 @@ init =
         , (champ4.name, champ4)
         , (champ5.name, champ5)
         ]
-    roundLengthInSeconds =
-      4.0
   in
   ( { grid = Grid.empty cols rows
     , rows = rows
     , cols = cols
-    , ticksPerRound = round (roundLengthInSeconds * 60)
     , position = Mouse.Position 50 50
     , drag = Nothing
     , scale = 0.80
@@ -254,7 +251,7 @@ update msg model =
           case model.mode of
             Simulating Paused idx round ->
               -- Unpause replays from tick 0 if we're at the end
-              if idx == model.ticksPerRound - 1 then
+              if idx == Constants.ticksPerRound - 1 then
                 Simulating Playing 0 round
               else
                 Simulating Playing idx round
@@ -272,7 +269,7 @@ update msg model =
           case model.mode of
             Planning champs ->
               --Simulating Paused 0 (Round.simulate champs)
-              Simulating Playing 0 (Round.simulate model.ticksPerRound champs)
+              Simulating Playing 0 (Round.simulate Constants.ticksPerRound champs)
             Simulating _ _ round ->
               case Array.get 0 round.ticks of
                 Nothing ->
@@ -425,8 +422,6 @@ view model =
                     Debug.crash "Impossible"
                   Just tick ->
                     tick.champs
-        , ticksPerRound =
-            model.ticksPerRound
         , tickIdx =
             case model.mode of
               Simulating _ idx _ ->
@@ -553,7 +548,7 @@ viewTickScrubber model =
         [ Html.input
           [ Html.Attributes.type' "range"
           , Html.Attributes.min "0"
-          , Html.Attributes.max (toString (model.ticksPerRound - 1))
+          , Html.Attributes.max (toString (Constants.ticksPerRound - 1))
           , Html.Attributes.value (toString idx)
           , Html.Attributes.list "tick-scrubber"
           , Html.Attributes.property "step" (JE.string "1")
@@ -569,7 +564,7 @@ viewTickScrubber model =
               (\n ->
                 (Html.option [] [ Html.text (toString n) ])
               )
-              [0..model.ticksPerRound-1]
+              [0..Constants.ticksPerRound-1]
           )
         , if playback == Playing then
             Html.button
@@ -581,7 +576,7 @@ viewTickScrubber model =
             [ Html.Events.onClick Unpause
             ]
             [ Html.text
-                (if idx == model.ticksPerRound - 1 then "Replay" else "Resume")
+                (if idx == Constants.ticksPerRound - 1 then "Replay" else "Resume")
             ]
         , Html.p
           []

@@ -12,6 +12,7 @@ import Set exposing (Set)
 -- 1st
 import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
+import Constants
 
 
 type Action
@@ -286,7 +287,7 @@ view ctx champ =
                     frames =
                       17
                     bucket =
-                      floor (toFloat ctx.tickIdx / (toFloat ctx.ticksPerRound / frames / animSpeed)) % frames
+                      floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
                   in
                     "./img/sprites/champ/move_" ++ toString bucket ++ ".png"
                 Idling ->
@@ -296,7 +297,7 @@ view ctx champ =
                     frames =
                       17
                     bucket =
-                      floor (toFloat ctx.tickIdx / (toFloat ctx.ticksPerRound / frames / animSpeed)) % frames
+                      floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
                   in
                     "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
                 Dead ->
@@ -421,5 +422,4 @@ type alias Context msg =
   , selectedChamp : Maybe Champ
   , selectedWaypoint : Maybe Waypoint
   , tickIdx : Int
-  , ticksPerRound : Int
   }
