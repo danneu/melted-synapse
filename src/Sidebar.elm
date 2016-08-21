@@ -13,7 +13,6 @@ import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
 import WaypointDetail
 import ChampDetail
-import Action
 
 
 -- MODEL

@@ -45,6 +45,11 @@ flipY (x, y) =
   (x, -y)
 
 
+add : Vector -> Vector -> Vector
+add (x1, y1) (x2, y2) =
+  (x1 + x2, y1 + y2)
+
+
 -- radians
 angleTo : Vector -> Vector -> Float
 angleTo (x1, y1) (x2, y2) =

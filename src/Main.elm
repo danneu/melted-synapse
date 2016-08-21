@@ -538,7 +538,13 @@ view model =
         }
     in
       Grid.view ctx model.grid
-  , Html.App.map SidebarMsg (Sidebar.view model.sidebar)
+    -- Only show the Sidebar in Planning mode since it doesn't update
+    -- as the simulation plays.
+  , case model.mode of
+      Planning _ ->
+        Html.App.map SidebarMsg (Sidebar.view model.sidebar)
+      _ ->
+        Html.text ""
   , Html.div
     [ Html.Attributes.id "footerbar" ]
     [ Html.button

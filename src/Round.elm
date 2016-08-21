@@ -9,6 +9,9 @@ import Array exposing (Array)
 -- 1st
 import Champ exposing (Champ)
 import Vector
+import Util
+import Class exposing (Class)
+import Warrior
 
 
 type alias Tick =
@@ -24,141 +27,94 @@ type alias Round =
   }
 
 
+-- A champ only moves if status == Moving
+moveChamp : String -> Dict String Champ -> Dict String Champ
+moveChamp name dict =
+  let
+    champ = Util.forceUnwrap (Dict.get name dict)
+  in
+  if champ.status /= Champ.Moving then
+    dict
+  else
+    case champ.waypoints of
+      [] ->
+        -- No more waypoints, so idle
+        Dict.insert name { champ | status = Champ.Idling } dict
+      waypoint :: rest ->
+        -- if champ is on a waypoint, transition into any action that's on the
+        -- way point.
+        -- else, consume the waypoint and continue moving
+        if (Vector.dist champ.position waypoint.position < champ.speed * 1/60) then
+          case waypoint.actions of
+            [] ->
+              -- No actions, so consume the waypoint and head onwards
+              Dict.insert
+                name
+                { champ
+                    | position = waypoint.position
+                    , waypoints = List.drop 1 champ.waypoints
+                }
+                dict
+            action :: _ ->
+              -- Waypoint had an action in queue, so transition into it
+              let
+                -- update waypoint actions
+                waypoint' =
+                  { waypoint
+                      | actions = List.drop 1 waypoint.actions
+                  }
+              in
+                Dict.insert
+                  name
+                  { champ
+                      | position = waypoint.position
+                      , status = Champ.ClassSpecific (Champ.Acting action)
+                      , waypoints = waypoint' :: rest
+                  }
+                  dict
+        else
+          -- didn't hit a waypoint, so keep moving towards the next one
+          let
+            (prevX, prevY) = champ.position
+            (dx, dy) =
+              Vector.fromPoints champ.position waypoint.position
+              |> Vector.normalize
+              |> Vector.scale (champ.speed * 1/60)
+            position' =
+              (prevX + dx, prevY + dy)
+          in
+            Dict.insert
+              name
+              (Champ.faceWaypoint { champ | position = position' })
+              dict
+
+
+stepClass : String -> Class -> Dict String Champ -> Dict String Champ
+stepClass name class dict =
+  case class of
+    Class.Warrior ->
+      Warrior.stepChamp name dict
+    _ ->
+      -- unimplemented
+      dict
+
+
 -- TODO: This is getting really nasty.
 stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
 stepChamp name _ (log, dict) =
   let
-    -- 0. Load current champ from the dict since another champ's step
-    --    may have mutated them
-    champ0 =
-      case Dict.get name dict of
-        Nothing ->
-          Debug.crash "Impossible"
-        Just champ ->
-          champ
+    --  Load current champ from the dict since another champ's step
+    --  may have mutated them
+    champ = Util.forceUnwrap (Dict.get name dict)
   in
-    -- Skip champ is they are dead
-    if champ0.status == Champ.Dead then
+    if champ.status == Champ.Dead then
+      -- Skip champ if they are dead
       (log, dict)
     else
-    let
-      -- 1. Move the champ (champ0 -> champ1)
-      champ1 =
-        case champ0.status of
-          Champ.Moving ->
-            case champ0.waypoints of
-              -- idle when we run out of waypoints
-              [] ->
-                { champ0 | status = Champ.Idling }
-              waypoint :: rest ->
-                -- consume waypoint if champ is on it, else move champ towards it
-                  if Vector.dist champ0.position waypoint.position < champ0.speed * 1/60 then
-                    { champ0
-                        | position = waypoint.position
-                        , waypoints = List.drop 1 champ0.waypoints
-                    }
-                  else
-                    let
-                      (prevX, prevY) = champ0.position
-                      (dx, dy) =
-                        Vector.fromPoints champ0.position waypoint.position
-                        |> Vector.normalize
-                        |> Vector.scale (champ0.speed * 1/60)
-                      position' =
-                        (prevX + dx, prevY + dy)
-                    in
-                      { champ0 | position = position' }
-                      |> Champ.faceWaypoint
-          _ ->
-            champ0
-      -- 2. Check and advance auto-attack  (champ1 -> champ2)
-      (champ2, maybeVictim) =
-        case champ1.status of
-          -- Champ is in the middle of an auto-attack, so advance it.
-          -- If it's finished, then transition to another state.
-          Champ.AutoAttacking (currTick, tickDuration) victim ->
-            let
-              currTick' =
-                currTick + 1
-              status' =
-                if currTick' <= tickDuration then
-                  -- still autoattacking
-                  let
-                    victim' =
-                      case Dict.get victim.name dict of
-                        Just enemy ->
-                          enemy
-                        _ ->
-                          Debug.crash "Impossible"
-                  in
-                    Champ.AutoAttacking (currTick', tickDuration) victim'
-                else
-                  -- done autoattacking, so transition to idling or moving
-                  if List.isEmpty champ1.waypoints then
-                    Champ.Idling
-                  else
-                    Champ.Moving
-            in
-              ( { champ1 | status = status' }
-                -- Point champ at victim every frame
-                |> Champ.faceVictim
-              , Nothing
-              )
-          -- Champ is available to auto-attack something, so check enemies in range
-          _ ->
-            -- if another champ is within autoattack range, attack that champ
-            let
-              autoattackRange =
-                1 -- radius in meters
-              champsToAttack =
-                List.filter
-                  ( \other ->
-                      -- ignore self
-                      champ1.name /= other.name
-                      -- ignore dead champs
-                      && other.status /= Champ.Dead
-                      -- ignore champs out of range
-                      && (Vector.dist champ1.position other.position) <= autoattackRange
-                  )
-                  (Dict.values dict)
-            in
-              case List.head champsToAttack of
-                Nothing ->
-                  (champ1, Nothing)
-                Just enemy ->
-                  ( { champ1
-                      | status =
-                          Champ.AutoAttacking (1, 60) enemy
-                    }
-                    |> Champ.faceVictim
-                  , Just enemy
-                  )
-      -- FIXME: the code/exprs assigned to maybeVictim' and log' are examples
-      --        of Elm code that feels wrong to me but I can't seem to avoid.
-      maybeVictim' =
-        Maybe.map (Champ.sufferDamage 25) maybeVictim
-      log' =
-        case maybeVictim' of
-          Just {name, status} ->
-            case status of
-              Champ.Dead ->
-                List.append log [champ0.name ++ " killed " ++ name]
-              _ ->
-                log
-          _ ->
-            log
-    in
-      ( log'
-      , dict
-        -- Update dict with this champ's move
-        |> Dict.insert champ0.name champ2
-        -- Mutate attack victim if there was one
-        |> case maybeVictim' of
-            Nothing ->
-              identity
-            Just victim ->
-              Dict.insert victim.name victim
-      )
+      dict
+      |> (stepClass name champ.class)
+      |> (moveChamp name)
+      |> (\d -> (log, d))
 
 
 stepTick : Int -> List Tick -> List Tick

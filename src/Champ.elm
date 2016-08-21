@@ -16,6 +16,13 @@ import Action exposing (Action)
 import Class exposing (Class)
 
 
+type ClassStatus
+  -- ALL
+  = Acting Action
+  -- WARRIOR
+  | AutoAttacking (Int, Int) Champ
+
+
 type Status
   -- Champ is just standing there (no waypoints)
   = Idling
@@ -24,7 +31,8 @@ type Status
   -- Champ is in the middle of its autoattack animation
   -- Holds the current tick and the total tick count of the status
   -- and also holds the target champ
-  | AutoAttacking (Int, Int) Champ
+  --| AutoAttacking (Int, Int) Champ
+  | ClassSpecific ClassStatus
   | Dead
 
 
@@ -52,7 +60,7 @@ init name position (currHp, maxHp) =
   , speed = 2
   , angle = 0
   , waypoints = []
-  , class = Class.Warrior Nothing
+  , class = Class.Warrior
   }
 
 
@@ -85,15 +93,15 @@ faceWaypoint champ =
 
 
 -- Makes champ face its attack victim if there is one
-faceVictim : Champ -> Champ
-faceVictim champ =
-  case champ.status of
-    AutoAttacking _ enemy ->
-      { champ
-          | angle = Vector.angleTo champ.position enemy.position
-      }
-    _ ->
-      champ
+-- faceVictim : Champ -> Champ
+-- faceVictim champ =
+--   case champ.status of
+--     AutoAttacking _ enemy ->
+--       { champ
+--           | angle = Vector.angleTo champ.position enemy.position
+--       }
+--     _ ->
+--       champ
 
 
 -- Sorting the dead champs first lets us render them behind the alive champs.
@@ -158,10 +166,19 @@ statusToEmoji status =
       "⌛"
     Moving ->
       "⏩️"
-    AutoAttacking _ _ ->
-      "👊" --"⚔"
     Dead ->
       "⚰"
+    ClassSpecific classStatus ->
+      case classStatus of
+        AutoAttacking _ _ ->
+          "👊" --"⚔"
+        Acting action ->
+          case action of
+            Action.Charge _ ->
+              "🚀"
+            Action.Snipe _ _ ->
+              "🔫"
+
 
 
 statusToSimpleName : Status -> String
@@ -171,10 +188,18 @@ statusToSimpleName status =
       "Idling"
     Moving ->
       "Moving"
-    AutoAttacking _ _ ->
-      "Auto-Attacking"
     Dead ->
       "Dead"
+    ClassSpecific classStatus ->
+      case classStatus of
+        AutoAttacking _ _ ->
+          "AutoAttacking"
+        Acting action ->
+          case action of
+            Action.Charge _ ->
+              "Charging"
+            Action.Snipe _ _ ->
+              "Sniping"
 
 
 viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
@@ -287,16 +312,6 @@ view ctx champ =
               -- TODO: DRY or extract
               -- animSpeed 1.0 means play one loop of the animation per round
               case champ.status of
-                AutoAttacking (curr, duration) _ ->
-                  let
-                    animSpeed =
-                      1.0
-                    frames =
-                      9 -- frame count of animation
-                    bucket =
-                      floor (toFloat (curr - 1) / (toFloat duration / frames / animSpeed)) % frames
-                  in
-                    "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
                 Moving ->
                   let
                     animSpeed =
@@ -319,6 +334,29 @@ view ctx champ =
                     "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
                 Dead ->
                   "./img/tombstone.png"
+                ClassSpecific classStatus ->
+                  case classStatus of
+                    AutoAttacking (curr, duration) _ ->
+                      let
+                        animSpeed =
+                          1.0
+                        frames =
+                          9 -- frame count of animation
+                        bucket =
+                          floor (toFloat (curr - 1) / (toFloat duration / frames / animSpeed)) % frames
+                      in
+                        "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
+                    _ ->
+                      -- For now use idling for other stuff
+                      let
+                        animSpeed =
+                          2.0
+                        frames =
+                          17
+                        bucket =
+                          floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
+                      in
+                        "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
             -- Scale the champ image to 128x128 instead of 64x64
             -- unless they are dead
             (x', y', side) =

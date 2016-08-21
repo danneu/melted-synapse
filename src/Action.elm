@@ -3,28 +3,13 @@
 module Action exposing (..)
 
 
--- Elm
-import Time exposing (Time)
+--
+-- Actions are things that a champ can enqueue at a Waypoint
+--
 
 
 type alias Angle =
   Float
-
-
--- TODO: Figure out how to leverage the type system here better.
---       For example, is it possible for a Warrior's waypoint to only
---       enqueue Warrior actions?
--- TODO: Will there be General actions not specific to a class?
--- type Action
---   -- WARRIOR
---   = Charge Angle
---   | WarCry Angle
---   -- RANGER
---   | Snipe Angle
-
-type Action
-  = WarAct WarriorAction
-  | RanAct RangerAction
 
 
 -- Starts at (1, tickDuration), ends at (tickDuration, tickDuration)
@@ -32,10 +17,10 @@ type alias Duration =
   (Int, Int)
 
 
-type WarriorAction
+-- TODO: Will there be General actions not specific to a class?
+type Action
+  -- WARRIOR
   = Charge Angle
-  | WarCry Angle Duration
-
-
-type RangerAction
-  = Snipe Angle Duration
+  --| WarCry Angle Duration
+  -- RANGER
+  | Snipe Angle Duration
