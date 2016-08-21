@@ -16,7 +16,7 @@ var app = Elm.Main.embed(document.getElementById('main'))
 // Blur buttons after each click so that spacebar doesn't
 // trigger them (browser behavior).
 document.addEventListener('click', function (e) {
-  if (e.target.tagName === 'BUTTON') {
+  if (['BUTTON', 'INPUT'].indexOf(e.target.tagName) > -1) {
     e.target.blur()
   }
 }, false)
