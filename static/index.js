@@ -14,9 +14,7 @@ require('./css/index.scss')
 // inject bundled Elm app into div#main
 
 
-var Elm = require('../src/Main')
-
-// show user some text while they wait for assets to laod
+// once the javascript payload is loaded, restyle the loading text
 document.getElementById('main').innerHTML =
   '<p style="color: white;" class="lead text-center">' +
   '  Loading... <span id="progress"></span>' +
@@ -24,6 +22,8 @@ document.getElementById('main').innerHTML =
 
 function onAssetsLoaded () {
   document.getElementById('main').innerHTML = ''
+
+  var Elm = require('../src/Main')
   var app = Elm.Main.embed(document.getElementById('main'))
 
   // Blur buttons after each click so that spacebar doesn't
@@ -280,7 +280,6 @@ loader.addCompletionListener(function () {
 })
 
 loader.addProgressListener(function (e) {
-  console.log('progress')
   document.getElementById('progress').innerHTML =
     [e.completedCount, '/', e.totalCount].join(' ')
 })
