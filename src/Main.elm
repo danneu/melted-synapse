@@ -21,7 +21,7 @@ import List.Extra
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
-import Round
+import Round exposing (Round)
 import Util.List
 
 
@@ -50,7 +50,7 @@ type Mode
   -- Int is current tick (0 to ticksPerRound-1)
   -- Tick 0 is the original state pre-simulation which can be used to
   -- transition back into planning mode.
-  | Simulating Playback Int (Array (Dict String Champ))
+  | Simulating Playback Int Round
 
 
 type alias Model =
@@ -238,8 +238,8 @@ update msg model =
       let
         mode' =
           case model.mode of
-            Simulating Playing idx ticks ->
-              Simulating Paused idx ticks
+            Simulating Playing idx round ->
+              Simulating Paused idx round
             _ ->
               model.mode
       in
@@ -252,12 +252,12 @@ update msg model =
       let
         mode' =
           case model.mode of
-            Simulating Paused idx ticks ->
+            Simulating Paused idx round ->
               -- Unpause replays from tick 0 if we're at the end
               if idx == model.ticksPerRound - 1 then
-                Simulating Playing 0 ticks
+                Simulating Playing 0 round
               else
-                Simulating Playing idx ticks
+                Simulating Playing idx round
             _ ->
               model.mode
       in
@@ -273,12 +273,12 @@ update msg model =
             Planning champs ->
               --Simulating Paused 0 (Round.simulate champs)
               Simulating Playing 0 (Round.simulate model.ticksPerRound champs)
-            Simulating _ _ ticks ->
-              case Array.get 0 ticks of
+            Simulating _ _ round ->
+              case Array.get 0 round.ticks of
                 Nothing ->
                   Debug.crash "Impossible"
-                Just champs ->
-                  Planning champs
+                Just tick ->
+                  Planning tick.champs
       in
         ( { model | mode = mode' }
         , Cmd.none
@@ -288,10 +288,10 @@ update msg model =
       case model.mode of
         Planning _ ->
           (model, Cmd.none)
-        Simulating playback _ ticks ->
+        Simulating playback _ round ->
           let
             maxIdx =
-              (Array.length ticks) - 1
+              (Array.length round.ticks) - 1
             (playback', idx') =
               if idx > maxIdx then
                 (Paused, maxIdx)
@@ -299,7 +299,7 @@ update msg model =
                 (playback, idx)
             model' =
               { model
-                  | mode = Simulating playback' idx' ticks
+                  | mode = Simulating playback' idx' round
               }
           in
             (model', Cmd.none)
@@ -419,12 +419,12 @@ view model =
             case model.mode of
               Planning champs ->
                 champs
-              Simulating _ idx ticks ->
-                case Array.get idx ticks of
+              Simulating _ idx round ->
+                case Array.get idx round.ticks of
                   Nothing ->
                     Debug.crash "Impossible"
-                  Just champs ->
-                    champs
+                  Just tick ->
+                    tick.champs
         , ticksPerRound =
             model.ticksPerRound
         , tickIdx =
@@ -546,7 +546,7 @@ viewTickScrubber model =
   case model.mode of
     Planning _ ->
       Html.text ""
-    Simulating playback idx _ ->
+    Simulating playback idx round ->
       Html.div
         [ Html.Attributes.style [ ("margin", "10px 50px 10px 10px") ]
         ]
@@ -586,6 +586,17 @@ viewTickScrubber model =
         , Html.p
           []
           [ Html.text "Drag the slider to scrub through history" ]
+          -- Display a log of events in the round as they happen
+        , let
+            currLog =
+              -- Not sure if I want an array or list
+              Array.toList round.ticks
+              |> List.take (idx + 1)
+              |> List.concatMap .log
+          in
+            Html.ul
+            []
+            (List.map (\msg -> Html.li [] [Html.text msg]) currLog)
         ]
 
 

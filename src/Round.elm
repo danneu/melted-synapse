@@ -12,10 +12,23 @@ import Champ exposing (Champ)
 import Vector
 
 
+type alias Tick =
+  { id : Int
+  , champs : Dict String Champ
+  , log : List String
+  }
+
+
+type alias Round =
+  { id : Int
+  , ticks : Array Tick
+  }
+
+
 -- TODO: This is getting really nasty. I'd like to accumulate
 --       more novelty before trying to abstract it, though.
-stepChamp : String -> Champ -> Dict String Champ -> Dict String Champ
-stepChamp name _ dict =
+stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepChamp name _ (log, dict) =
   let
     -- 0. Load current champ from the dict since another champ's step
     --    may have mutated them
@@ -28,7 +41,7 @@ stepChamp name _ dict =
   in
     -- Skip champ is they are dead
     if champ0.action == Champ.Dead then
-      dict
+      (log, dict)
     else
     let
       -- 1. Move the champ (champ0 -> champ1)
@@ -124,36 +137,66 @@ stepChamp name _ dict =
                     |> Champ.faceVictim
                   , Just enemy
                   )
+      -- FIXME: the code/exprs assigned to maybeVictim' and log' are examples
+      --        of Elm code that feels wrong to me but I can't seem to avoid.
+      maybeVictim' =
+        Maybe.map (Champ.sufferDamage 25) maybeVictim
+      log' =
+        case maybeVictim' of
+          Just {name, action} ->
+            case action of
+              Champ.Dead ->
+                List.append log [champ0.name ++ " killed " ++ name]
+              _ ->
+                log
+          _ ->
+            log
     in
-      dict
-      -- Update dict with this champ's move
-      |> Dict.insert champ0.name champ2
-      -- Mutate attack victim if there was one
-      |> case maybeVictim of
-          Nothing ->
-            identity
-          Just victim ->
-            Dict.insert victim.name (Champ.sufferDamage 25 victim)
+      ( log'
+      , dict
+        -- Update dict with this champ's move
+        |> Dict.insert champ0.name champ2
+        -- Mutate attack victim if there was one
+        |> case maybeVictim' of
+            Nothing ->
+              identity
+            Just victim ->
+              Dict.insert victim.name victim
+      )
 
 
-stepTick : Int -> List (Dict String Champ) -> List (Dict String Champ)
+stepTick : Int -> List Tick -> List Tick
 stepTick _  ticks =
   case ticks of
     [] ->
       Debug.crash "Impossible"
-    prevChamps :: _ ->
-      (Dict.foldl stepChamp prevChamps prevChamps) :: ticks
+    prevTick :: _ ->
+      let
+        (log, champs) =
+          (Dict.foldl stepChamp ([], prevTick.champs) prevTick.champs)
+        nextTick =
+          { id = prevTick.id + 1
+          , champs = champs
+          , log = log
+          }
+      in
+        nextTick :: ticks
 
 
-simulate : Int -> Dict String Champ -> Array (Dict String Champ)
+simulate : Int -> Dict String Champ -> Round
 simulate ticksPerRound champs =
   let
     -- first we reset the round-scoped state of each champ
     resetChamps =
       Dict.map (\_ champ -> Champ.roundReset champ) champs
+    initTick =
+      Tick 0 resetChamps []
+    ticks =
+      List.foldl stepTick [initTick] [1..ticksPerRound]
+      |> List.reverse
+      -- Drop the final tick so we only have ticksPerRound quantity of ticks
+      |> List.take ticksPerRound
   in
-    List.foldl stepTick [resetChamps] [1..ticksPerRound]
-    |> List.reverse
-    -- Drop the final tick so we only have ticksPerRound quantity of ticks
-    |> List.take ticksPerRound
-    |> Array.fromList
+    { id = 1
+    , ticks = Array.fromList ticks
+    }
