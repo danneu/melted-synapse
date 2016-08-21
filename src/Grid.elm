@@ -6,13 +6,10 @@ module Grid exposing (..)
 -- Elm
 import Array exposing (Array)
 import Html exposing (Html)
-import Html.Attributes
-import Html.Events
 import Svg exposing (..)
 import Svg.Attributes
 import Svg.Events
 import Mouse
-import String
 import Json.Decode as JD
 import Dict exposing (Dict)
 -- 1st

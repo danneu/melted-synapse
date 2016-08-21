@@ -8,9 +8,21 @@ import Svg exposing (..)
 import Svg.Attributes
 import Svg.Events
 import String
+import Set exposing (Set)
 -- 1st
 import Waypoint exposing (Waypoint)
-import Vector
+import Vector exposing (Vector)
+
+
+type Action
+  -- Champ is just standing there (no waypoints)
+  = Idling
+  -- Champ is on the move towards its next waypoint
+  | Moving
+  -- Champ is in the middle of its autoattack animation
+  -- Holds the current tick and the total tick count of the action
+  -- and also holds the target champ
+  | AutoAttacking (Int, Int) Champ
 
 
 type alias Champ =
@@ -20,6 +32,11 @@ type alias Champ =
   , waypoints : List Waypoint
   , speed : Float -- meters aka tiles per second
   , angle : Float
+  -- Holds set of enemy champ names that this champ has autoattacked in
+  -- the current round to ensure that a champ only autoattacks another champ
+  -- once per round.
+  , autoattacked : Set String
+  , action : Action
   }
 
 
@@ -36,6 +53,31 @@ faceWaypoint champ =
       { champ
           | angle = Vector.angleTo champ.position waypoint.position
       }
+
+
+-- Makes champ face its attack victim if there is one
+faceVictim : Champ -> Champ
+faceVictim champ =
+  case champ.action of
+    AutoAttacking _ enemy ->
+      { champ
+          | angle = Vector.angleTo champ.position enemy.position
+      }
+    _ ->
+      champ
+
+
+-- Called at the start of every simulation round since some state does
+-- not carry from round to round.
+-- TODO: Probably means this state should live in Round.elm.
+roundReset : Champ -> Champ
+roundReset champ =
+  { champ
+      -- the autoattacked set only exists to ensure a champ only attacks
+      -- another enemy once per round, so it gets cleared each round.
+      | autoattacked =
+          Set.empty
+  }
 
 
 -- VIEW
@@ -171,6 +213,24 @@ view ctx champ =
             , Svg.Events.onClick (ctx.onChampClick champ)
             ]
             []
+        -- Show champ's current action
+        , let
+            text =
+              case champ.action of
+              Idling ->
+                "Idling"
+              Moving ->
+                "Moving"
+              AutoAttacking (curr, duration) _ ->
+                "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
+          in
+            Svg.text'
+              [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
+              , Svg.Attributes.y (toString (y * tilesize + tilesize / 1))
+              , Svg.Attributes.class "no-select"
+              , Svg.Attributes.fill "#cccccc"
+              ]
+              [ Svg.text text ]
         ]
         (List.map (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ)) champ.waypoints)
       )

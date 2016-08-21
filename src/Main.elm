@@ -14,6 +14,7 @@ import Array exposing (Array)
 import Json.Encode as JE
 import Json.Decode as JD
 import Time
+import Set
 -- 3rd
 import Keyboard.Extra as KE
 import List.Extra
@@ -77,27 +78,29 @@ init =
     (kbModel, kbCmd) = KE.init
     champ1 =
       { name = "champ1"
+      , action = Champ.Moving
       , hp = (100, 100)
       , position = (6, 0)
       , speed = 2
       , angle = 0
       , waypoints =
         [ { position = (6, 2) }
-        , { position = (5, 4) }
+        , { position = (5, 5) }
         ]
+      , autoattacked = Set.empty
       }
       |> Champ.faceWaypoint
     champ2 =
       { name = "champ2"
+      , action = Champ.Moving
       , hp = (100, 100)
-      , position = (2.5, 6.5)
+      , position = (4, 2)
       , speed = 2
       , angle = 0
       , waypoints =
-        [ { position = (4, 5) }
-        , { position = (5, 6) }
-        , { position = (4, 7) }
+        [ { position = (7, 4) }
         ]
+      , autoattacked = Set.empty
       }
       |> Champ.faceWaypoint
     champs =
