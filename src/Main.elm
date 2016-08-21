@@ -78,71 +78,22 @@ init =
     cols = 13
     (kbModel, kbCmd) = KE.init
     champ1 =
-      { name = "champ1"
-      , action = Champ.Moving
-      , hp = (75, 100, 0)
-      , position = (6, 0)
-      , speed = 2
-      , angle = 0
-      , waypoints =
-        [ { position = (6, 2) }
-        , { position = (5, 5) }
-        ]
-      , autoattacked = Set.empty
-      }
-      |> Champ.faceWaypoint
+      Champ.init "champ1" (6, 0) (75, 100)
+      |> Champ.addWaypoint (6, 2)
+      |> Champ.addWaypoint (5, 5)
     champ2 =
-      { name = "champ2"
-      , action = Champ.Moving
-      , hp = (14, 100, 0)
-      , position = (4, 2)
-      , speed = 2
-      , angle = 0
-      , waypoints =
-        [ { position = (7, 4) }
-        ]
-      , autoattacked = Set.empty
-      }
-      |> Champ.faceWaypoint
+      Champ.init "champ2" (4, 2) (14, 100)
+      |> Champ.addWaypoint (7, 4)
     -- champ3 and champ4 will run directly at each other
     -- to demonstrate head-on champ collision (auto-attack each other)
     champ3 =
-      { name = "champ3"
-      , action = Champ.Moving
-      , hp = (50, 100, 0)
-      , position = (5, 8)
-      , speed = 2
-      , angle = 0
-      , waypoints =
-        [ { position = (10, 9) }
-        ]
-      , autoattacked = Set.empty
-      }
-      |> Champ.faceWaypoint
+      Champ.init "champ3" (5, 8) (50, 100)
+      |> Champ.addWaypoint (10, 9)
     champ4 =
-      { name = "champ4"
-      , action = Champ.Moving
-      , hp = (92, 100, 0)
-      , position = (7, 8)
-      , speed = 2
-      , angle = 0
-      , waypoints =
-        [ { position = (2, 9) }
-        ]
-      , autoattacked = Set.empty
-      }
-      |> Champ.faceWaypoint
+      Champ.init "champ4" (7, 8) (92, 100)
+      |> Champ.addWaypoint (2, 9)
     champ5 =
-      { name = "champ5"
-      , action = Champ.Idling
-      , hp = (22, 100, 0)
-      , position = (8, 9)
-      , speed = 2
-      , angle = pi / 4
-      , waypoints = []
-      , autoattacked = Set.empty
-      }
-      |> Champ.faceWaypoint
+      Champ.init "champ5" (8, 9) (22, 100)
     champs =
       Dict.fromList
         [ (champ1.name, champ1)

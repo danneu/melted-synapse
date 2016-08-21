@@ -43,6 +43,29 @@ type alias Champ =
   }
 
 
+-- Convenience function for creating champs
+init : String -> Vector -> (Int, Int) -> Champ
+init name position (currHp, maxHp) =
+  { name = name
+  , action = Idling
+  , hp = (currHp, maxHp, 0)
+  , position = position
+  , speed = 2
+  , angle = 0
+  , waypoints = []
+  , autoattacked = Set.empty
+  }
+
+
+addWaypoint : Vector -> Champ -> Champ
+addWaypoint position champ =
+  { champ
+      | waypoints = List.append champ.waypoints [Waypoint position]
+      , action = Moving
+  }
+  |> faceWaypoint
+
+
 -- sets champ's angle based on next waypoint
 -- noops if no waypoint
 --
