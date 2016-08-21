@@ -19,7 +19,7 @@ var Elm = require('../src/Main')
 // show user some text while they wait for assets to laod
 document.getElementById('main').innerHTML =
   '<p style="color: white;" class="lead text-center">' +
-  '  Loading...' +
+  '  Loading... <span id="progress"></span>' +
   '</p>'
 
 function onAssetsLoaded () {
@@ -277,6 +277,12 @@ var loader = new PxLoader()
 
 loader.addCompletionListener(function () {
   onAssetsLoaded()
+})
+
+loader.addProgressListener(function (e) {
+  console.log('progress')
+  document.getElementById('progress').innerHTML =
+    [e.completedCount, '/', e.totalCount].join(' ')
 })
 
 loader.start()
