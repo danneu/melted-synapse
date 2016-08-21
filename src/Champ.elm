@@ -23,6 +23,7 @@ type Action
   -- Holds the current tick and the total tick count of the action
   -- and also holds the target champ
   | AutoAttacking (Int, Int) Champ
+  | Dead
 
 
 type alias Champ =
@@ -65,6 +66,25 @@ faceVictim champ =
       }
     _ ->
       champ
+
+
+sufferDamage : Int -> Champ -> Champ
+sufferDamage damage champ =
+  let
+    (currHp, maxHp) =
+      champ.hp
+    currHp' =
+      currHp - damage
+    action' =
+      if currHp' <= 0 then
+        Dead
+      else
+        champ.action
+  in
+    { champ
+        | hp = (currHp', maxHp)
+        , action = action'
+    }
 
 
 -- Called at the start of every simulation round since some state does
@@ -197,7 +217,11 @@ view ctx champ =
         --     Svg.text' [] []
         , let
             degrees =
-              (champ.angle * 180 / pi) + 90
+              -- Don't rotate the tombstone graphic
+              if champ.action == Dead then
+                0
+              else
+                (champ.angle * 180 / pi) + 90
             (originX, originY) =
               (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
             transform =
@@ -238,6 +262,8 @@ view ctx champ =
                       floor (toFloat ctx.tickIdx / (toFloat ctx.ticksPerRound / frames / animSpeed)) % frames
                   in
                     "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
+                Dead ->
+                  "./img/tombstone.png"
           in
             -- Scale the champ image to 128x128 instead of 64x64
             Svg.image
@@ -256,12 +282,14 @@ view ctx champ =
         , let
             text =
               case champ.action of
-              Idling ->
-                "Idling"
-              Moving ->
-                "Moving"
-              AutoAttacking (curr, duration) _ ->
-                "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
+                Idling ->
+                  "Idling"
+                Moving ->
+                  "Moving"
+                AutoAttacking (curr, duration) _ ->
+                  "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
+                Dead ->
+                  ""
           in
             Svg.text'
               [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
@@ -277,7 +305,8 @@ view ctx champ =
             fullWidth = tilesize
             (currHp, maxHp) = champ.hp
             padding = 2
-            currWidth = tilesize * (toFloat currHp / toFloat maxHp) - padding / 2
+            currWidth =
+              max 0 (tilesize * (toFloat currHp / toFloat maxHp) - padding / 2)
           in
             Svg.g
             []
