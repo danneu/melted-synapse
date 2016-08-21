@@ -154,6 +154,19 @@ tilesize =
   64
 
 
+actionToEmoji : Action -> String
+actionToEmoji action =
+  case action of
+    Idling ->
+      "⌛"
+    Moving ->
+      "⏩️"
+    AutoAttacking _ _ ->
+      "⚔"
+    Dead ->
+      "☠"
+
+
 viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
 viewWaypoint maybeWaypoint onWaypointClick waypoint =
   let
@@ -247,20 +260,6 @@ view ctx champ =
             []
           else
             Svg.text' [] []
-        -- General selection indicator
-        -- , if champIsSelected then
-        --     Svg.rect
-        --     [ Svg.Attributes.x (toString (x * tilesize))
-        --     , Svg.Attributes.y (toString (y * tilesize))
-        --     , Svg.Attributes.width <| toString tilesize
-        --     , Svg.Attributes.height <| toString tilesize
-        --     , Svg.Attributes.fill "none"
-        --     , Svg.Attributes.stroke "yellow"
-        --     , Svg.Attributes.strokeWidth "3"
-        --     ]
-        --     []
-        --   else
-        --     Svg.text' [] []
         , let
             degrees =
               -- Don't rotate the tombstone graphic
@@ -309,41 +308,56 @@ view ctx champ =
                   in
                     "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
                 Dead ->
-                  "./img/tombstone.png"
-          in
+                  "./img/tombstone2.png"
             -- Scale the champ image to 128x128 instead of 64x64
+            -- unless they are dead
+            (x', y', w', h') =
+              if champ.action == Dead then
+                ( x * tilesize
+                , y * tilesize
+                , tilesize
+                , tilesize
+                )
+              else
+                ( x * tilesize - 64/2
+                , y * tilesize - 64/2
+                , tilesize * 2
+                , tilesize * 2
+                )
+
+          in
             Svg.image
-            [ Svg.Attributes.x (toString (x * tilesize - 64/2))
-            , Svg.Attributes.y (toString (y * tilesize - 64/2))
-            , Svg.Attributes.width <| toString (tilesize * 2)
-            , Svg.Attributes.height <| toString (tilesize * 2)
-            -- , Svg.Attributes.width <| toString tilesize
-            -- , Svg.Attributes.height <| toString tilesize
+            [ Svg.Attributes.x (toString x')
+            , Svg.Attributes.y (toString y')
+            , Svg.Attributes.width <| toString w'
+            , Svg.Attributes.height <| toString h'
             , Svg.Attributes.xlinkHref imageSrc
             , Svg.Attributes.transform transform
             , Svg.Events.onClick (ctx.onChampClick champ)
             ]
             []
-        -- Show champ's current action
-        , let
-            text =
-              case champ.action of
-                Idling ->
-                  "Idling"
-                Moving ->
-                  "Moving"
-                AutoAttacking (curr, duration) _ ->
-                  "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
-                Dead ->
-                  ""
-          in
-            Svg.text'
-              [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
-              , Svg.Attributes.y (toString (y * tilesize + tilesize / 1))
-              , Svg.Attributes.class "no-select"
-              , Svg.Attributes.fill "white"
-              ]
-              [ Svg.text text ]
+
+        -- -- Show champ's current action
+        -- , let
+        --     text =
+        --       case champ.action of
+        --         Idling ->
+        --           "Idling"
+        --         Moving ->
+        --           "Moving"
+        --         AutoAttacking (curr, duration) _ ->
+        --           "Attacking (" ++ toString curr ++ ", " ++ toString duration ++ ")"
+        --         Dead ->
+        --           ""
+        --   in
+        --     Svg.text'
+        --       [ Svg.Attributes.x (toString (x * tilesize + tilesize / 4))
+        --       , Svg.Attributes.y (toString (y * tilesize + tilesize / 1))
+        --       , Svg.Attributes.class "no-select"
+        --       , Svg.Attributes.fill "white"
+        --       ]
+        --       [ Svg.text text ]
+
         -- Show champ name and HP bar
         , let
             marginTop = -10
@@ -369,10 +383,9 @@ view ctx champ =
               [ Svg.Attributes.x (toString (x * tilesize))
               , Svg.Attributes.y (toString (y * tilesize + marginTop - 5))
               , Svg.Attributes.fill "white"
+              , Svg.Attributes.class "no-select"
               ]
-              [ Svg.text
-                  <| champ.name
-                     ++ if champ.action == Dead then " (dead)" else ""
+              [ Svg.text (champ.name ++ actionToEmoji champ.action)
               ]
               -- background
             , Svg.rect
