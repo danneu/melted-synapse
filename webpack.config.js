@@ -26,7 +26,8 @@ var commonConfig = {
       {
         test: /\.(eot|ttf|woff|woff2|svg)$/,
         loader: 'file-loader'
-      }
+      },
+      { test: /\.png$/, loader: 'file' }
     ]
   },
   plugins: [

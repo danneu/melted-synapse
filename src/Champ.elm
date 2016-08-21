@@ -202,13 +202,28 @@ view ctx champ =
               "rotate("
               ++ String.join " " (List.map toString [degrees, originX, originY])
               ++ ")"
+            imageSrc =
+              case champ.action of
+                AutoAttacking (curr, duration) _ ->
+                  let
+                    frames =
+                      9 -- frame count of animation
+                    bucket =
+                      floor (toFloat (curr - 1) / (toFloat duration / frames))
+                  in
+                    "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
+                _ ->
+                  "./img/sprites/champ/idle.gif"
           in
+            -- Scale the champ image to 128x128 instead of 64x64
             Svg.image
-            [ Svg.Attributes.x (toString (x * tilesize))
-            , Svg.Attributes.y (toString (y * tilesize))
-            , Svg.Attributes.width <| toString tilesize
-            , Svg.Attributes.height <| toString tilesize
-            , Svg.Attributes.xlinkHref "./img/champ-idle.gif"
+            [ Svg.Attributes.x (toString (x * tilesize - 64/2))
+            , Svg.Attributes.y (toString (y * tilesize - 64/2))
+            , Svg.Attributes.width <| toString (tilesize * 2)
+            , Svg.Attributes.height <| toString (tilesize * 2)
+            -- , Svg.Attributes.width <| toString tilesize
+            -- , Svg.Attributes.height <| toString tilesize
+            , Svg.Attributes.xlinkHref imageSrc
             , Svg.Attributes.transform transform
             , Svg.Events.onClick (ctx.onChampClick champ)
             ]
