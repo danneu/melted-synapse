@@ -103,10 +103,40 @@ init =
       , autoattacked = Set.empty
       }
       |> Champ.faceWaypoint
+    -- champ3 and champ4 will run directly at each other
+    -- to demonstrate head-on champ collision (auto-attack each other)
+    champ3 =
+      { name = "champ3"
+      , action = Champ.Moving
+      , hp = (100, 100)
+      , position = (4, 8)
+      , speed = 2
+      , angle = 0
+      , waypoints =
+        [ { position = (10, 9) }
+        ]
+      , autoattacked = Set.empty
+      }
+      |> Champ.faceWaypoint
+    champ4 =
+      { name = "champ4"
+      , action = Champ.Moving
+      , hp = (100, 100)
+      , position = (8, 8)
+      , speed = 2
+      , angle = 0
+      , waypoints =
+        [ { position = (2, 9) }
+        ]
+      , autoattacked = Set.empty
+      }
+      |> Champ.faceWaypoint
     champs =
       Dict.fromList
         [ (champ1.name, champ1)
         , (champ2.name, champ2)
+        , (champ3.name, champ3)
+        , (champ4.name, champ4)
         ]
   in
   ( { grid = Grid.empty cols rows
