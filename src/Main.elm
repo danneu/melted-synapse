@@ -179,8 +179,7 @@ update msg model =
         Planning champs ->
           let
             waypoint =
-              { position = (toFloat x, toFloat y)
-              }
+              Waypoint.empty (toFloat x, toFloat y)
             champ' =
               { champ
                   | waypoints = List.append champ.waypoints [waypoint]

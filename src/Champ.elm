@@ -55,7 +55,7 @@ init name position (currHp, maxHp) =
 addWaypoint : Vector -> Champ -> Champ
 addWaypoint position champ =
   { champ
-      | waypoints = List.append champ.waypoints [Waypoint position]
+      | waypoints = List.append champ.waypoints [Waypoint.empty position]
       , status = Moving
   }
   |> faceWaypoint
