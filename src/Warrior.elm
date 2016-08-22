@@ -95,15 +95,18 @@ stepChamp name dict =
                   deltaTime =
                     1/60
                   chargeSpeed =
-                    10
+                    5
                   velocity =
                     ( chargeSpeed * cos angle * deltaTime
-                    , chargeSpeed * sin angle * deltaTime -- maybe * -1?
+                    , chargeSpeed * sin angle * deltaTime
                     )
                   position' =
                     Vector.add champ.position velocity
                   champ' =
-                    { champ | position = position' }
+                    { champ
+                        | position = position'
+                        , angle = angle
+                    }
                 in
                   Dict.insert name champ' dict
               _ ->

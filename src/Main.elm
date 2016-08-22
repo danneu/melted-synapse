@@ -164,6 +164,7 @@ update msg model =
           (model, Cmd.none)
     ChampClick champ ->
       let
+        _ = Debug.log "ChampClick" champ
         (sidebar', _) =
           Sidebar.update (Sidebar.ChampSelected champ) model.sidebar
       in
