@@ -14,6 +14,7 @@ import Vector exposing (Vector)
 import Constants exposing (tilesize)
 import Action exposing (Action)
 import Class exposing (Class)
+import Util
 
 
 type ClassStatus
@@ -304,7 +305,8 @@ view ctx champ =
               if champ.status == Dead then
                 0
               else
-                (champ.angle * 180 / pi) + 90
+                --(champ.angle * 180 / pi) + 90
+                Util.toDegrees champ.angle + 90
             (originX, originY) =
               (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
             transform =

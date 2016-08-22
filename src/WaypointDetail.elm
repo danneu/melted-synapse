@@ -6,6 +6,8 @@ module WaypointDetail exposing (..)
 -- Elm
 import Html exposing (Html)
 import Html.Events
+import Html.Attributes
+import List.Extra
 -- 1st
 import Waypoint exposing (Waypoint)
 import Action exposing (Action)
@@ -39,7 +41,7 @@ type OutMsg
 
 type Msg
   = AddAction Action
-  --| RemoveAction Int Waypoint -- Int is index
+  | RemoveAction Int -- Int is index
   | ClearActions
 
 
@@ -50,6 +52,16 @@ update msg ({champName, waypoint} as model) =
     AddAction action ->
       let
         waypoint' = { waypoint | actions = List.append waypoint.actions [action] }
+      in
+        ( { model | waypoint = waypoint' }
+        , UpdateWaypoint champName  waypoint'
+        )
+    RemoveAction idx ->
+      let
+        waypoint' =
+          { waypoint
+              | actions = List.Extra.removeAt idx waypoint.actions
+          }
       in
         ( { model | waypoint = waypoint' }
         , UpdateWaypoint champName  waypoint'
@@ -66,11 +78,16 @@ update msg ({champName, waypoint} as model) =
 -- VIEW
 
 
-viewAction : Action -> Html Msg
-viewAction action =
+viewAction : Int -> Action -> Html Msg
+viewAction idx action =
   Html.li
   []
-  [ Html.text (toString action)
+  [ Html.button
+    [ Html.Events.onClick (RemoveAction idx)
+    , Html.Attributes.class "btn btn-danger btn-xs"
+    ]
+    [ Html.text "X" ]
+  , Html.text (" " ++ Action.toString action)
   ]
 
 
@@ -93,7 +110,7 @@ view {champName, waypoint} =
     else
       Html.ol
       []
-      (List.map viewAction waypoint.actions)
+      (List.indexedMap viewAction waypoint.actions)
   , Html.p [] [ Html.text "Add an action" ]
   , Html.ul
     []
@@ -101,7 +118,7 @@ view {champName, waypoint} =
       []
       [ Html.button
         [ Html.Events.onClick
-            (AddAction (Action.Charge (Util.toRenderAngle (degrees 0))))
+            (AddAction (Action.Charge (degrees 270)))
         ]
         [ Html.text "Charge up" ]
       ]
@@ -109,7 +126,7 @@ view {champName, waypoint} =
       []
       [ Html.button
         [ Html.Events.onClick
-            (AddAction (Action.Charge (Util.toRenderAngle (degrees 90))))
+            (AddAction (Action.Charge 0))
         ]
         [ Html.text "Charge right" ]
       ]
@@ -117,7 +134,7 @@ view {champName, waypoint} =
       []
       [ Html.button
         [ Html.Events.onClick
-            (AddAction (Action.Charge (Util.toRenderAngle (degrees 180))))
+            (AddAction (Action.Charge (degrees 90)))
         ]
         [ Html.text "Charge down" ]
       ]
@@ -125,7 +142,7 @@ view {champName, waypoint} =
       []
       [ Html.button
         [ Html.Events.onClick
-            (AddAction (Action.Charge (Util.toRenderAngle (degrees 270))))
+            (AddAction (Action.Charge (degrees 180)))
         ]
         [ Html.text "Charge left" ]
       ]

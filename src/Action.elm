@@ -3,6 +3,10 @@
 module Action exposing (..)
 
 
+-- 1st
+import Util
+
+
 --
 -- Actions are things that a champ can enqueue at a Waypoint
 --
@@ -24,3 +28,22 @@ type Action
   --| WarCry Angle Duration
   -- RANGER
   | Snipe Angle Duration
+
+
+
+-- User-friendly name of the action
+toString : Action -> String
+toString action =
+  case action of
+    Charge angle ->
+      let
+        degrees =
+          round (Util.toDegrees angle)
+      in
+        "Charge " ++ Basics.toString degrees ++ "°"
+    Snipe angle _ ->
+      let
+        degrees =
+          round (Util.toDegrees angle)
+      in
+        "Snipe " ++ Basics.toString degrees ++ "°"
