@@ -89,6 +89,36 @@ moveChamp name dict =
               dict
 
 
+-- Checks champ for an action that is enqueued directly on them
+-- If there is one, it transitions to it.
+checkSelf : String -> Dict String Champ -> Dict String Champ
+checkSelf name dict =
+  let
+    champ = Util.forceUnwrap (Dict.get name dict)
+  in
+    case champ.status of
+      Champ.Dead ->
+        dict
+      Champ.ClassSpecific _ ->
+        dict
+      _ ->
+        -- Can only start an action if idling/moving
+        case champ.actions of
+          [] ->
+            -- No actions, nothing to do
+            dict
+          action :: rest ->
+            let
+              champ' =
+                { champ
+                    | status = Champ.ClassSpecific (Champ.Acting action)
+                    , actions = rest
+                }
+            in
+              Dict.insert name champ' dict
+
+
+
 stepClass : String -> Class -> Dict String Champ -> Dict String Champ
 stepClass name class dict =
   case class of
@@ -112,6 +142,7 @@ stepChamp name _ (log, dict) =
       (log, dict)
     else
       dict
+      |> (checkSelf name)
       |> (stepClass name champ.class)
       |> (moveChamp name)
       |> (\d -> (log, d))

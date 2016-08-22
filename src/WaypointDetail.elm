@@ -5,10 +5,12 @@ module WaypointDetail exposing (..)
 
 -- Elm
 import Html exposing (Html)
+import Html.Events
 -- 1st
 import Waypoint exposing (Waypoint)
 import Action exposing (Action)
 import Vector
+import Util
 
 
 -- MODEL
@@ -92,14 +94,40 @@ view {champName, waypoint} =
       Html.ol
       []
       (List.map viewAction waypoint.actions)
-  -- , Html.p [] [ Html.text "Add an action" ]
-  -- , Html.ul
-  --   []
-  --   [ Html.li
-  --     []
-  --     [ Html.button
-  --       [ Html.Events.onClick (AddAction Action.Wait) ]
-  --       [ Html.text "Wait 1000ms" ]
-  --     ]
-  --   ]
+  , Html.p [] [ Html.text "Add an action" ]
+  , Html.ul
+    []
+    [ Html.li
+      []
+      [ Html.button
+        [ Html.Events.onClick
+            (AddAction (Action.Charge (Util.toRenderAngle (degrees 0))))
+        ]
+        [ Html.text "Charge up" ]
+      ]
+    , Html.li
+      []
+      [ Html.button
+        [ Html.Events.onClick
+            (AddAction (Action.Charge (Util.toRenderAngle (degrees 90))))
+        ]
+        [ Html.text "Charge right" ]
+      ]
+    , Html.li
+      []
+      [ Html.button
+        [ Html.Events.onClick
+            (AddAction (Action.Charge (Util.toRenderAngle (degrees 180))))
+        ]
+        [ Html.text "Charge down" ]
+      ]
+    , Html.li
+      []
+      [ Html.button
+        [ Html.Events.onClick
+            (AddAction (Action.Charge (Util.toRenderAngle (degrees 270))))
+        ]
+        [ Html.text "Charge left" ]
+      ]
+    ]
   ]

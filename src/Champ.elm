@@ -47,6 +47,8 @@ type alias Champ =
   , angle : Float
   , status : Status
   , class : Class
+    -- Like waypoints, you can enqueue actions directly on the champ
+  , actions : List Action
   }
 
 
@@ -60,6 +62,7 @@ init name position (currHp, maxHp) =
   , speed = 2
   , angle = 0
   , waypoints = []
+  , actions = []
   , class = Class.Warrior
   }
 
