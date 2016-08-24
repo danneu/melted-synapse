@@ -124,7 +124,7 @@ view {champName, waypoint} =
         [ Html.Events.onClick
             (AddAction (Action.Charge (degrees 270)))
         ]
-        [ Html.text "Charge up" ]
+        [ Html.text "🚀 Charge up" ]
       ]
     , Html.li
       []
@@ -132,7 +132,7 @@ view {champName, waypoint} =
         [ Html.Events.onClick
             (AddAction (Action.Charge 0))
         ]
-        [ Html.text "Charge right" ]
+        [ Html.text "🚀 Charge right" ]
       ]
     , Html.li
       []
@@ -140,7 +140,7 @@ view {champName, waypoint} =
         [ Html.Events.onClick
             (AddAction (Action.Charge (degrees 90)))
         ]
-        [ Html.text "Charge down" ]
+        [ Html.text "🚀 Charge down" ]
       ]
     , Html.li
       []
@@ -148,7 +148,7 @@ view {champName, waypoint} =
         [ Html.Events.onClick
             (AddAction (Action.Charge (degrees 180)))
         ]
-        [ Html.text "Charge left" ]
+        [ Html.text "🚀 Charge left" ]
       ]
     ]
   ]
