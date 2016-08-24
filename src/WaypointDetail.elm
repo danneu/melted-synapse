@@ -85,9 +85,10 @@ viewAction idx action =
   [ Html.button
     [ Html.Events.onClick (RemoveAction idx)
     , Html.Attributes.class "btn btn-danger btn-xs"
+    , Html.Attributes.style [ ("margin-right", "5px") ]
     ]
     [ Html.text "X" ]
-  , Html.text (" " ++ Action.toString action)
+  , Action.toHtml action
   ]
 
 
@@ -112,6 +113,9 @@ view {champName, waypoint} =
       []
       (List.indexedMap viewAction waypoint.actions)
   , Html.p [] [ Html.text "Add an action" ]
+  , Html.p
+    [ Html.Attributes.style [ ("font-style", "italic") ] ]
+    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons" ]
   , Html.ul
     []
     [ Html.li

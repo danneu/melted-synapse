@@ -3,6 +3,8 @@
 module Action exposing (..)
 
 
+import Html exposing (Html)
+import Html.Attributes
 -- 1st
 import Util
 
@@ -32,18 +34,29 @@ type Action
 
 
 -- User-friendly name of the action
-toString : Action -> String
-toString action =
+toHtml : Action -> Html msg
+toHtml action =
   case action of
     Charge angle ->
       let
         degrees =
           round (Util.toDegrees angle)
       in
-        "Charge " ++ Basics.toString degrees ++ "°"
+        Html.span
+        []
+        [ Html.text "Charge "
+        , Html.span
+          [ Html.Attributes.style
+              [ ("display", "inline-block")
+              , ("transform", "rotate(" ++ Basics.toString degrees ++ "deg)")
+              ]
+          ]
+          [ Html.text "→" ]
+        ]
     Snipe angle _ ->
       let
         degrees =
           round (Util.toDegrees angle)
       in
-        "Snipe " ++ Basics.toString degrees ++ "°"
+        Html.text
+        <| "Snipe " ++ Basics.toString degrees ++ "°"
