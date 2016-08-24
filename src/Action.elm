@@ -5,6 +5,8 @@ module Action exposing (..)
 
 import Html exposing (Html)
 import Html.Attributes
+-- 3rd
+import Numeral
 -- 1st
 import Util
 
@@ -30,6 +32,8 @@ type Action
   --| WarCry Angle Duration
   -- RANGER
   | Snipe Angle Duration
+  -- GENERAL
+  | Wait Duration
 
 
 
@@ -37,6 +41,14 @@ type Action
 toHtml : Action -> Html msg
 toHtml action =
   case action of
+    Wait (_, totalTicks) ->
+      let
+        seconds =
+          toFloat totalTicks / 60
+        suffix =
+          if seconds == 1 then " second" else " seconds"
+      in
+        Html.text ("Wait " ++ Numeral.format "0[.]0" seconds ++ suffix)
     Charge angle ->
       let
         degrees =

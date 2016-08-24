@@ -115,12 +115,13 @@ view {champName, waypoint} =
   , Html.p [] [ Html.text "Add an action" ]
   , Html.p
     [ Html.Attributes.style [ ("font-style", "italic") ] ]
-    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons" ]
+    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons, and implement slider for wait duration." ]
   , Html.ul
     []
     [ Html.li
       []
       [ Html.text "🚀 Charge: "
+      , Html.br [] []
       , Html.button
         [ Html.Events.onClick (AddAction (Action.Charge (degrees 180))) ]
         [ Html.text "←" ]
@@ -133,6 +134,23 @@ view {champName, waypoint} =
       , Html.button
         [ Html.Events.onClick (AddAction (Action.Charge (degrees 0))) ]
         [ Html.text "→" ]
+      ]
+    , Html.li
+      []
+      [ Html.text "⌛ Wait: "
+      , Html.br [] []
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Wait (1, 30))) ]
+        [ Html.text "0.5 sec" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Wait (1, 60))) ]
+        [ Html.text "1 sec" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Wait (1, 90))) ]
+        [ Html.text "1.5 sec" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Wait (1, 120))) ]
+        [ Html.text "2 sec" ]
       ]
     ]
   ]

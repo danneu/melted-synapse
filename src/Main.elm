@@ -95,8 +95,10 @@ init =
         |> Champ.addWaypoint (2, 9) []
       , Champ.init "champ5" (8, 9) (22, 100)
       , Champ.init "champ6" (10, 2) (100, 100)
-        |> Champ.addWaypoint (10, 3) [Action.Charge (degrees 180)]
-        |> Champ.addWaypoint (10, 5) []
+        |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 60)
+                                     , Action.Charge (degrees 180)
+                                     ]
+        |> Champ.addWaypoint (7, 5) []
       ]
       |> List.map (\ ({name} as champ) -> (name, champ))
       |> Dict.fromList

@@ -12,6 +12,7 @@ import Vector
 import Util
 import Class exposing (Class)
 import Warrior
+import Action
 
 
 type alias Tick =
@@ -125,15 +126,50 @@ checkSelf name dict =
               Dict.insert name champ' dict
 
 
+stepWaitAction : Action.Duration -> String -> Dict String Champ -> Dict String Champ
+stepWaitAction (prevTicks, totalTicks) name dict =
+  let
+    champ =
+      Util.forceUnwrap (Dict.get name dict)
+    status' =
+      if prevTicks == totalTicks then
+        -- Finished waiting
+        if List.isEmpty champ.waypoints then
+          Champ.Idling
+        else
+          Champ.Moving
+      else
+        -- Still waiting
+        Champ.ClassSpecific (Champ.Acting (Action.Wait (prevTicks + 1, totalTicks)))
+    champ' =
+      { champ
+          | status = status'
+      }
+  in
+    Dict.insert champ'.name champ' dict
 
+
+
+-- Should really be stepAction, only delegating to class if
+-- action is not general
 stepClass : String -> Class -> Dict String Champ -> Dict String Champ
 stepClass name class dict =
-  case class of
-    Class.Warrior ->
-      Warrior.stepChamp name dict
-    _ ->
-      -- unimplemented
+  let
+    champ = Util.forceUnwrap (Dict.get name dict)
+  in
+  case champ.status of
+    Champ.Dead ->
+      -- the dead do nothing
       dict
+    -- handle it here if it's a general action, else delegate to the class
+    Champ.ClassSpecific (Champ.Acting (Action.Wait duration)) ->
+      stepWaitAction duration name dict
+    _ ->
+      case class of
+        Class.Warrior ->
+          Warrior.stepChamp name dict
+        _ ->
+          Debug.crash "Class not implemented"
 
 
 -- TODO: This is getting really nasty.

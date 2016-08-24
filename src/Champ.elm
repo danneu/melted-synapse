@@ -163,11 +163,12 @@ roundReset champ =
 -- VIEW
 
 
+-- TODO: Change to statusToIcon since it's only emoji for now.
 statusToEmoji : Status -> String
 statusToEmoji status =
   case status of
     Idling ->
-      "⌛"
+      "💤"
     Moving ->
       "⏩️"
     Dead ->
@@ -175,13 +176,15 @@ statusToEmoji status =
     ClassSpecific classStatus ->
       case classStatus of
         AutoAttacking _ _ ->
-          "👊" --"⚔"
+          "👊"
         Acting action ->
           case action of
             Action.Charge _ ->
               "🚀"
             Action.Snipe _ _ ->
               "🔫"
+            Action.Wait _ ->
+              "⌛"
 
 
 
@@ -204,6 +207,8 @@ statusToSimpleName status =
               "Charging"
             Action.Snipe _ _ ->
               "Sniping"
+            Action.Wait _ ->
+              "Waiting"
 
 
 viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
