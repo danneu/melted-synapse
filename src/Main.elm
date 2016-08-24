@@ -109,8 +109,7 @@ init =
     , scale = 0.80
     , mode = Planning champs
     , keyboard = kbModel
-    , selection =
-        ChampSelected (Util.forceUnwrap (List.head (Dict.values champs)))
+    , selection = None
     , showCoords = False
     , sidebar = Sidebar.init
     }
@@ -599,6 +598,14 @@ view model =
           Html.ul
           []
           [ Html.li
+            []
+            [ Html.span
+              [ Html.Attributes.style
+                  [ ("font-weight", "bold") ]
+              ]
+              [ Html.text "Quickstart: Spam spacebar a few times." ]
+            ]
+          , Html.li
             []
             [ Html.text "Click a champ or waypoint to select it." ]
           , Html.li

@@ -10,7 +10,7 @@ like its tactical waypoint system and simultaneous turn resolution.
 
 ![screenshot][screenshot]
 
-[screenshot]: https://dl.dropboxusercontent.com/spa/quq37nq1583x0lf/zjw9uimk.png
+[screenshot]: https://dl.dropboxusercontent.com/spa/quq37nq1583x0lf/43iiv5xg.png
 
 I like the idea of many players enqueuing actions for each of their soldiers
 at the same time (using waypoints). Once each player submits their waypoints
