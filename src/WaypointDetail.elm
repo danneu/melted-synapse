@@ -120,35 +120,19 @@ view {champName, waypoint} =
     []
     [ Html.li
       []
-      [ Html.button
-        [ Html.Events.onClick
-            (AddAction (Action.Charge (degrees 270)))
-        ]
-        [ Html.text "🚀 Charge up" ]
-      ]
-    , Html.li
-      []
-      [ Html.button
-        [ Html.Events.onClick
-            (AddAction (Action.Charge 0))
-        ]
-        [ Html.text "🚀 Charge right" ]
-      ]
-    , Html.li
-      []
-      [ Html.button
-        [ Html.Events.onClick
-            (AddAction (Action.Charge (degrees 90)))
-        ]
-        [ Html.text "🚀 Charge down" ]
-      ]
-    , Html.li
-      []
-      [ Html.button
-        [ Html.Events.onClick
-            (AddAction (Action.Charge (degrees 180)))
-        ]
-        [ Html.text "🚀 Charge left" ]
+      [ Html.text "🚀 Charge: "
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Charge (degrees 180))) ]
+        [ Html.text "←" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Charge (degrees 270))) ]
+        [ Html.text "↑" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Charge (degrees 90))) ]
+        [ Html.text "↓" ]
+      , Html.button
+        [ Html.Events.onClick (AddAction (Action.Charge (degrees 0))) ]
+        [ Html.text "→" ]
       ]
     ]
   ]
