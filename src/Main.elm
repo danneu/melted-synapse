@@ -84,7 +84,7 @@ init =
     (kbModel, kbCmd) = KE.init
     -- Seeding the game with some demo champs to play with
     champs =
-      [ Champ.init "champ1" (6, 0) (75, 100)
+      [ Champ.init "champ1" (6, 1) (75, 100)
         |> Champ.addWaypoint (6, 2) []
         |> Champ.addWaypoint (5, 5) []
       , Champ.init "champ2" (4, 2) (14, 100)
@@ -95,7 +95,7 @@ init =
         |> Champ.addWaypoint (2, 9) []
       , Champ.init "champ5" (8, 9) (22, 100)
       , Champ.init "champ6" (10, 2) (100, 100)
-        |> Champ.addWaypoint (10, 3) []
+        |> Champ.addWaypoint (10, 3) [Action.Charge (degrees 180)]
         |> Champ.addWaypoint (10, 5) []
       ]
       |> List.map (\ ({name} as champ) -> (name, champ))

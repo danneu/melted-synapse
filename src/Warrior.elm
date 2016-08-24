@@ -10,6 +10,7 @@ import Champ exposing (Champ)
 import Vector exposing (Vector)
 import Action exposing (Action)
 import Util
+import Collision
 
 
 -- Progresses the cooldown and transitions to another status once finished.
@@ -74,6 +75,56 @@ checkAutoAttack champ dict =
           |> Dict.insert victim'.name victim'
 
 
+stepCharge : Float -> Champ -> Dict String Champ -> Dict String Champ
+stepCharge angle champ dict =
+  let
+    deltaTime =
+      1/60
+    chargeSpeed =
+      5
+    velocity =
+      ( chargeSpeed * cos angle * deltaTime
+      , chargeSpeed * sin angle * deltaTime
+      )
+    position' =
+      Vector.add champ.position velocity
+  in
+    case Collision.test dict { champ | position = position' } of
+      Just (Collision.Enemy victim) ->
+        let
+          victim' =
+            Champ.sufferDamage 100 victim
+          champ' =
+            { champ
+                | position = position'
+                , status =
+                    -- Maybe abilities should always transition champ to
+                    -- Idling when they are done, and Round's moveChamp
+                    -- step can transition from Idling -> Moving if they have
+                    -- waypoints so each ability doesn't need to implement this.
+                    if List.isEmpty champ.waypoints then
+                      Champ.Idling
+                    else
+                      Champ.Moving
+            }
+        in
+          dict
+          -- Update the victim
+          |> Dict.insert victim'.name victim'
+          -- Stop moving the charging champ
+          |> Dict.insert champ'.name champ'
+      _ ->
+        -- Keep moving the champ
+        let
+          champ' =
+            { champ
+                | position = position'
+                , angle = angle
+            }
+        in
+          Dict.insert champ'.name champ' dict
+
+
 
 stepChamp : String -> Dict String Champ -> Dict String Champ
 stepChamp name dict =
@@ -91,24 +142,7 @@ stepChamp name dict =
           Champ.Acting action ->
             case action of
               Action.Charge angle ->
-                let
-                  deltaTime =
-                    1/60
-                  chargeSpeed =
-                    5
-                  velocity =
-                    ( chargeSpeed * cos angle * deltaTime
-                    , chargeSpeed * sin angle * deltaTime
-                    )
-                  position' =
-                    Vector.add champ.position velocity
-                  champ' =
-                    { champ
-                        | position = position'
-                        , angle = angle
-                    }
-                in
-                  Dict.insert name champ' dict
+                stepCharge angle champ dict
               _ ->
                 Debug.crash "Unexpected classStatus"
       _ ->

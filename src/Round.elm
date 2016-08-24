@@ -63,13 +63,20 @@ moveChamp name dict =
                   { waypoint
                       | actions = List.drop 1 waypoint.actions
                   }
+                waypoints' =
+                  -- If we consumed the waypoint's last action, then consume
+                  -- the waypoint.
+                  if List.isEmpty waypoint'.actions then
+                    rest
+                  else
+                    waypoint' :: rest
               in
                 Dict.insert
                   name
                   { champ
                       | position = waypoint.position
                       , status = Champ.ClassSpecific (Champ.Acting action)
-                      , waypoints = waypoint' :: rest
+                      , waypoints = waypoints'
                   }
                   dict
         else
