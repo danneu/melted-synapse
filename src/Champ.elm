@@ -243,6 +243,16 @@ viewWaypoint maybeWaypoint onWaypointClick waypoint =
       , Svg.Events.onClick (onWaypointClick waypoint)
       ]
       []
+    , if List.isEmpty waypoint.actions then
+        Svg.text' [] []
+      else
+        Svg.text'
+        [ Svg.Attributes.x (toString (x * tilesize + 3))
+        , Svg.Attributes.y (toString (y * tilesize - 3 + tilesize))
+        , Svg.Attributes.fill "white"
+        ]
+        [ Svg.text (toString (List.length waypoint.actions))
+        ]
     ]
 
 
