@@ -103,15 +103,7 @@ stepChamp name (log, dict) =
                 -- Check if champ is done sniping
                 if prevTick == totalTicks then
                   let
-                    status' =
-                      if List.isEmpty champ.waypoints then
-                        Champ.Idling
-                      else
-                        Champ.Moving
-                    champ' =
-                      { champ
-                          | status = status'
-                      }
+                    champ' = { champ | status = Champ.Idling }
                   in
                     (log, Dict.insert champ'.name champ' dict)
                 else

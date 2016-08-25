@@ -25,11 +25,8 @@ tickAutoAttack champ (prevTick, tickDuration) victim dict =
         -- We are still auto-attacking
         Champ.ClassSpecific (Champ.AutoAttacking (currTick, tickDuration) victim)
       else
-        -- Done auto-attacking, so transition to Idling or Moving
-        if List.isEmpty champ.waypoints then
-          Champ.Idling
-        else
-          Champ.Moving
+        -- Done auto-attacking
+        Champ.Idling
     champ' =
       { champ | status = status' }
   in
@@ -111,15 +108,7 @@ stepCharge angle champ (log, dict) =
           champ' =
             { champ
                 | position = position'
-                , status =
-                    -- Maybe abilities should always transition champ to
-                    -- Idling when they are done, and Round's moveChamp
-                    -- step can transition from Idling -> Moving if they have
-                    -- waypoints so each ability doesn't need to implement this.
-                    if List.isEmpty champ.waypoints then
-                      Champ.Idling
-                    else
-                      Champ.Moving
+                , status = Champ.Idling
             }
           log' =
             if victim'.status == Champ.Dead then

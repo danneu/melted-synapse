@@ -33,7 +33,16 @@ type alias Round =
 moveChamp : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
 moveChamp name (log, dict) =
   let
-    champ = Util.forceUnwrap (Dict.get name dict)
+    champ =
+      Util.forceUnwrap (Dict.get name dict)
+      -- If champ is idling but still has waypoints, transition to moving.
+      -- This makes Idling our default status that other abilties can always
+      -- transition to when they're done.
+      |> \champ ->
+          if champ.status == Champ.Idling && not (List.isEmpty champ.waypoints) then
+            { champ | status = Champ.Moving }
+          else
+            champ
   in
   if champ.status /= Champ.Moving then
     (log, dict)
@@ -139,10 +148,7 @@ stepWaitAction (prevTicks, totalTicks) name dict =
     status' =
       if prevTicks == totalTicks then
         -- Finished waiting
-        if List.isEmpty champ.waypoints then
-          Champ.Idling
-        else
-          Champ.Moving
+        Champ.Idling
       else
         -- Still waiting
         Champ.ClassSpecific (Champ.Acting (Action.Wait (prevTicks + 1, totalTicks)))
