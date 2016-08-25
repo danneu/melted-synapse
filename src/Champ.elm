@@ -300,6 +300,19 @@ view ctx champ =
         _ ->
           False
     (x, y) = champ.position
+    -- this is the render angle in SVG space where right = 0 degrees and goes CW
+    spriteAngle =
+      case champ.status of
+        Dead ->
+          -- Don't rotate the tombstone graphic
+          0
+        ClassSpecific (Acting (Action.Snipe angle _ _)) ->
+          -- If champ is sniping, make them face the bullet during cooldown
+          angle + pi / 2
+        _ ->
+          -- Since champ sprite image faces up, need to rotate 90 degs so
+          -- it faces the right
+          champ.angle + pi / 2
   in
     Svg.g
     []
@@ -346,12 +359,7 @@ view ctx champ =
               Svg.text' [] []
           , let
               degrees =
-                -- Don't rotate the tombstone graphic
-                if champ.status == Dead then
-                  0
-                else
-                  --(champ.angle * 180 / pi) + 90
-                  Util.toDegrees champ.angle + 90
+                Util.toDegrees spriteAngle
               (originX, originY) =
                 (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
               transform =
