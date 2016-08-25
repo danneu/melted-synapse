@@ -8,8 +8,8 @@ type Class
   | Ranger
 
 
-toEmoji : Class -> String
-toEmoji class =
+toIcon : Class -> String
+toIcon class =
   case class of
     Warrior ->
       "⚔"

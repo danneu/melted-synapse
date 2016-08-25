@@ -12,6 +12,7 @@ import Vector
 import Util
 import Class exposing (Class)
 import Warrior
+import Ranger
 import Action
 
 
@@ -59,6 +60,7 @@ moveChamp name dict =
             action :: _ ->
               -- Waypoint had an action in queue, so transition into it
               let
+                _ = Debug.log "action consumed" action
                 -- update waypoint actions
                 waypoint' =
                   { waypoint
@@ -169,7 +171,7 @@ stepClass name class dict =
         Class.Warrior ->
           Warrior.stepChamp name dict
         _ ->
-          Debug.crash "Class not implemented"
+          Ranger.stepChamp name dict
 
 
 -- TODO: This is getting really nasty.

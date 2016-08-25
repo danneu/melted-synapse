@@ -54,8 +54,8 @@ type alias Champ =
 
 
 -- Convenience function for creating champs
-init : String -> Vector -> (Int, Int) -> Champ
-init name position (currHp, maxHp) =
+init : String -> Class -> Vector -> (Int, Int) -> Champ
+init name class position (currHp, maxHp) =
   { name = name
   , status = Idling
   , hp = (currHp, maxHp, 0)
@@ -64,7 +64,7 @@ init name position (currHp, maxHp) =
   , angle = 0
   , waypoints = []
   , actions = []
-  , class = Class.Warrior
+  , class = class
   }
 
 
@@ -181,8 +181,8 @@ statusToEmoji status =
           case action of
             Action.Charge _ ->
               "🚀"
-            Action.Snipe _ _ ->
-              "🔫"
+            Action.Snipe _ _ _ ->
+              "🎯"
             Action.Wait _ ->
               "⌛"
 
@@ -205,7 +205,7 @@ statusToSimpleName status =
           case action of
             Action.Charge _ ->
               "Charging"
-            Action.Snipe _ _ ->
+            Action.Snipe _ _ _ ->
               "Sniping"
             Action.Wait _ ->
               "Waiting"
@@ -261,6 +261,34 @@ viewWaypoint maybeWaypoint onWaypointClick waypoint =
     ]
 
 
+viewArrow : Champ -> Svg msg
+viewArrow champ =
+  case champ.status of
+    ClassSpecific (Acting (Action.Snipe angle (x, y) _)) ->
+      let
+        degrees =
+          Util.toDegrees angle
+        (originX, originY) =
+          (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
+        transform =
+          "rotate(" ++
+          String.join " " (List.map toString [degrees, originX, originY]) ++
+          ")"
+      in
+        Svg.image
+          [ Svg.Attributes.x (toString (x * tilesize))
+          , Svg.Attributes.y (toString (y * tilesize))
+          , Svg.Attributes.width (toString tilesize)
+          , Svg.Attributes.height (toString tilesize)
+          , Svg.Attributes.xlinkHref "./img/arrow1.png"
+          , Svg.Attributes.transform transform
+          ]
+          []
+    _ ->
+      -- No arrow to render
+      Svg.text' [] []
+
+
 view : Context msg -> Champ -> Svg msg
 view ctx champ =
   let
@@ -274,199 +302,216 @@ view ctx champ =
   in
     Svg.g
     []
-    ( List.append
-        [ Svg.polyline
-          [ Svg.Attributes.fill "none"
-          , Svg.Attributes.stroke "black"
-          , Svg.Attributes.strokeWidth "6"
-          , Svg.Attributes.strokeOpacity
-              (if champIsSelected then "1.0" else "0.3")
-          , let
-              points =
-                List.map
-                  (\ (x, y) ->
-                    ( x * tilesize + tilesize / 2
-                    , y * tilesize + tilesize / 2
+    ( List.concat
+        [
+          [ Svg.polyline
+            [ Svg.Attributes.fill "none"
+            , Svg.Attributes.stroke "black"
+            , Svg.Attributes.strokeWidth "6"
+            , Svg.Attributes.strokeOpacity
+                (if champIsSelected then "1.0" else "0.3")
+            , let
+                points =
+                  List.map
+                    (\ (x, y) ->
+                      ( x * tilesize + tilesize / 2
+                      , y * tilesize + tilesize / 2
+                      )
                     )
+                    (champ.position :: (List.map .position champ.waypoints))
+                string =
+                  (List.map (\ (x, y) -> toString x ++ "," ++ toString y) points)
+                  |> String.join " "
+              in
+                Svg.Attributes.points string
+            ]
+            []
+          -- This circle shows auto-attack range
+          , if champIsSelected then
+              Svg.circle
+              [ Svg.Attributes.cx (toString (x * tilesize + tilesize / 2))
+              , Svg.Attributes.cy (toString (y * tilesize + tilesize / 2))
+              , Svg.Attributes.r (toString tilesize)
+              -- , Svg.Attributes.fill "red"
+              -- , Svg.Attributes.fillOpacity "0.5"
+              , Svg.Attributes.fill "none"
+              , Svg.Attributes.stroke "red"
+              , Svg.Attributes.strokeWidth "5"
+              , Svg.Attributes.strokeDasharray "10,5"
+              , Svg.Attributes.strokeOpacity "0.75"
+              ]
+              []
+            else
+              Svg.text' [] []
+          , let
+              degrees =
+                -- Don't rotate the tombstone graphic
+                if champ.status == Dead then
+                  0
+                else
+                  --(champ.angle * 180 / pi) + 90
+                  Util.toDegrees champ.angle + 90
+              (originX, originY) =
+                (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
+              transform =
+                "rotate("
+                ++ String.join " " (List.map toString [degrees, originX, originY])
+                ++ ")"
+              imageSrc =
+                -- TODO: DRY or extract
+                -- animSpeed 1.0 means play one loop of the animation per round
+                case champ.status of
+                  Moving ->
+                    let
+                      animSpeed =
+                        4.0
+                      frames =
+                        17
+                      bucket =
+                        floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
+                    in
+                      "./img/sprites/champ/move_" ++ toString bucket ++ ".png"
+                  Idling ->
+                    let
+                      animSpeed =
+                        2.0
+                      frames =
+                        17
+                      bucket =
+                        floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
+                    in
+                      "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
+                  Dead ->
+                    "./img/tombstone.png"
+                  ClassSpecific classStatus ->
+                    case classStatus of
+                      AutoAttacking (curr, duration) _ ->
+                        let
+                          animSpeed =
+                            1.0
+                          frames =
+                            9 -- frame count of animation
+                          bucket =
+                            floor (toFloat (curr - 1) / (toFloat duration / frames / animSpeed)) % frames
+                        in
+                          "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
+                      _ ->
+                        -- For now use idling for other stuff
+                        let
+                          animSpeed =
+                            2.0
+                          frames =
+                            17
+                          bucket =
+                            floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
+                        in
+                          "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
+              -- Scale the champ image to 128x128 instead of 64x64
+              -- unless they are dead
+              (x', y', side) =
+                if champ.status == Dead then
+                  ( x * tilesize
+                  , y * tilesize
+                  , tilesize
                   )
-                  (champ.position :: (List.map .position champ.waypoints))
-              string =
-                (List.map (\ (x, y) -> toString x ++ "," ++ toString y) points)
-                |> String.join " "
-            in
-              Svg.Attributes.points string
-          ]
-          []
-        -- This circle shows auto-attack range
-        , if champIsSelected then
-            Svg.circle
-            [ Svg.Attributes.cx (toString (x * tilesize + tilesize / 2))
-            , Svg.Attributes.cy (toString (y * tilesize + tilesize / 2))
-            , Svg.Attributes.r (toString tilesize)
-            -- , Svg.Attributes.fill "red"
-            -- , Svg.Attributes.fillOpacity "0.5"
-            , Svg.Attributes.fill "none"
-            , Svg.Attributes.stroke "red"
-            , Svg.Attributes.strokeWidth "5"
-            , Svg.Attributes.strokeDasharray "10,5"
-            , Svg.Attributes.strokeOpacity "0.75"
-            ]
-            []
-          else
-            Svg.text' [] []
-        , let
-            degrees =
-              -- Don't rotate the tombstone graphic
-              if champ.status == Dead then
-                0
-              else
-                --(champ.angle * 180 / pi) + 90
-                Util.toDegrees champ.angle + 90
-            (originX, originY) =
-              (x * tilesize + tilesize / 2, y * tilesize + tilesize / 2)
-            transform =
-              "rotate("
-              ++ String.join " " (List.map toString [degrees, originX, originY])
-              ++ ")"
-            imageSrc =
-              -- TODO: DRY or extract
-              -- animSpeed 1.0 means play one loop of the animation per round
-              case champ.status of
-                Moving ->
-                  let
-                    animSpeed =
-                      4.0
-                    frames =
-                      17
-                    bucket =
-                      floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
-                  in
-                    "./img/sprites/champ/move_" ++ toString bucket ++ ".png"
-                Idling ->
-                  let
-                    animSpeed =
-                      2.0
-                    frames =
-                      17
-                    bucket =
-                      floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
-                  in
-                    "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
-                Dead ->
-                  "./img/tombstone.png"
-                ClassSpecific classStatus ->
-                  case classStatus of
-                    AutoAttacking (curr, duration) _ ->
-                      let
-                        animSpeed =
-                          1.0
-                        frames =
-                          9 -- frame count of animation
-                        bucket =
-                          floor (toFloat (curr - 1) / (toFloat duration / frames / animSpeed)) % frames
-                      in
-                        "./img/sprites/champ/attack_" ++ toString bucket ++ ".png"
-                    _ ->
-                      -- For now use idling for other stuff
-                      let
-                        animSpeed =
-                          2.0
-                        frames =
-                          17
-                        bucket =
-                          floor (toFloat ctx.tickIdx / (toFloat Constants.ticksPerRound / frames / animSpeed)) % frames
-                      in
-                        "./img/sprites/champ/idle_" ++ toString bucket ++ ".png"
-            -- Scale the champ image to 128x128 instead of 64x64
-            -- unless they are dead
-            (x', y', side) =
-              if champ.status == Dead then
-                ( x * tilesize
-                , y * tilesize
-                , tilesize
-                )
-              else
-                ( x * tilesize - tilesize / 2
-                , y * tilesize - tilesize / 2
-                , tilesize * 2
-                )
+                else
+                  ( x * tilesize - tilesize / 2
+                  , y * tilesize - tilesize / 2
+                  , tilesize * 2
+                  )
 
-          in
-            Svg.image
-            [ Svg.Attributes.x (toString x')
-            , Svg.Attributes.y (toString y')
-            , Svg.Attributes.width <| toString side
-            , Svg.Attributes.height <| toString side
-            , Svg.Attributes.xlinkHref imageSrc
-            , Svg.Attributes.transform transform
-            , Svg.Events.onClick (ctx.onChampClick champ)
-            ]
-            []
-        -- Show champ name and HP bar
-        , let
-            marginTop = -10
-            fullHeight = 6
-            fullWidth = tilesize
-            (currHp, maxHp, deltaHp) = champ.hp
-            currWidth =
-              (tilesize * (toFloat currHp / toFloat maxHp))
-              |> round
-              |> min (round tilesize)
-              |> max 0
-            deltaWidth =
-              (tilesize * (toFloat (max 0 currHp + abs deltaHp) / toFloat maxHp))
-              |> round
-              |> min (round tilesize)
-              |> max 0
-          in
-            Svg.g
-            []
-            [
-              -- name
-              Svg.text'
-              [ Svg.Attributes.x (toString (x * tilesize))
-              , Svg.Attributes.y (toString (y * tilesize + marginTop - 5))
-              , Svg.Attributes.fill "white"
-              , Svg.Attributes.class "no-select"
-              ]
-              [ Svg.text (champ.name ++ " " ++ statusToEmoji champ.status)
-              ]
-              -- background
-            , Svg.rect
-              [ Svg.Attributes.x (toString (x * tilesize))
-              , Svg.Attributes.y (toString (y * tilesize + marginTop))
-              , Svg.Attributes.width <| toString fullWidth
-              , Svg.Attributes.height <| toString fullHeight
-              , Svg.Attributes.fill "black"
-              , Svg.Attributes.stroke "black"
-              , Svg.Attributes.strokeWidth "3"
+            in
+              Svg.image
+              [ Svg.Attributes.x (toString x')
+              , Svg.Attributes.y (toString y')
+              , Svg.Attributes.width <| toString side
+              , Svg.Attributes.height <| toString side
+              , Svg.Attributes.xlinkHref imageSrc
+              , Svg.Attributes.transform transform
+              , Svg.Events.onClick (ctx.onChampClick champ)
               ]
               []
-              -- foreground (deltaHp)
-            , Svg.rect
-              [ Svg.Attributes.x (toString (x * tilesize))
-              , Svg.Attributes.y (toString (y * tilesize + marginTop))
-              , Svg.Attributes.width <| toString deltaWidth
-              , Svg.Attributes.height <| toString fullHeight
-              , Svg.Attributes.fill
-                   (if deltaHp < 0 then "red" else "#00ff00")
-              ]
+          -- Show champ name and HP bar
+          , let
+              marginTop = -10
+              fullHeight = 6
+              fullWidth = tilesize
+              (currHp, maxHp, deltaHp) = champ.hp
+              currWidth =
+                (tilesize * (toFloat currHp / toFloat maxHp))
+                |> round
+                |> min (round tilesize)
+                |> max 0
+              deltaWidth =
+                (tilesize * (toFloat (max 0 currHp + abs deltaHp) / toFloat maxHp))
+                |> round
+                |> min (round tilesize)
+                |> max 0
+            in
+              Svg.g
               []
-              -- foreground (currHp)
-            , Svg.rect
-              [ Svg.Attributes.x (toString (x * tilesize))
-              , Svg.Attributes.y (toString (y * tilesize + marginTop))
-              , Svg.Attributes.width <| toString currWidth
-              , Svg.Attributes.height <| toString fullHeight
-              , Svg.Attributes.fill "#0000ff"
+              [
+                -- name
+                Svg.text'
+                [ Svg.Attributes.x (toString (x * tilesize))
+                , Svg.Attributes.y (toString (y * tilesize + marginTop - 5))
+                , Svg.Attributes.fill "white"
+                , Svg.Attributes.class "no-select"
+                ]
+                [ Svg.text (champ.name ++ " " ++ statusToEmoji champ.status)
+                ]
+                -- background
+              , Svg.rect
+                [ Svg.Attributes.x (toString (x * tilesize))
+                , Svg.Attributes.y (toString (y * tilesize + marginTop))
+                , Svg.Attributes.width <| toString fullWidth
+                , Svg.Attributes.height <| toString fullHeight
+                , Svg.Attributes.fill "black"
+                , Svg.Attributes.stroke "black"
+                , Svg.Attributes.strokeWidth "3"
+                ]
+                []
+                -- foreground (deltaHp)
+              , Svg.rect
+                [ Svg.Attributes.x (toString (x * tilesize))
+                , Svg.Attributes.y (toString (y * tilesize + marginTop))
+                , Svg.Attributes.width <| toString deltaWidth
+                , Svg.Attributes.height <| toString fullHeight
+                , Svg.Attributes.fill
+                    (if deltaHp < 0 then "red" else "#00ff00")
+                ]
+                []
+                -- foreground (currHp)
+              , Svg.rect
+                [ Svg.Attributes.x (toString (x * tilesize))
+                , Svg.Attributes.y (toString (y * tilesize + marginTop))
+                , Svg.Attributes.width <| toString currWidth
+                , Svg.Attributes.height <| toString fullHeight
+                , Svg.Attributes.fill "#0000ff"
+                ]
+                []
+                -- class (displays on newline under hp bar)
+              , Svg.text'
+                [ Svg.Attributes.x (toString (x * tilesize))
+                , Svg.Attributes.y (toString (y * tilesize + marginTop + 25))
+                , Svg.Attributes.fill "white"
+                ]
+                [
+                -- Icon is hard to see and is confusing next to the status emoji
+                -- so I'll just write it instead
+                --Svg.text (Class.toIcon champ.class)
+                Svg.text (toString champ.class)
+                ]
               ]
-              []
-            ]
+          ]
+          -- Draw waypoints
+        , ( List.map
+              (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ))
+              champ.waypoints
+          )
+          -- Draw arrow
+        , [viewArrow champ]
         ]
-        ( List.map
-            (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ))
-            champ.waypoints
-        )
       )
 
 

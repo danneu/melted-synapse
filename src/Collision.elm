@@ -3,7 +3,6 @@
 module Collision exposing (..)
 
 
-import Dict exposing (Dict)
 -- 1st
 import Champ exposing (Champ)
 import Vector exposing (Vector)
@@ -26,12 +25,13 @@ type Collision
   | Enemy Champ
 
 
-enemyCollision : Champ -> List Champ -> Maybe Champ
-enemyCollision champ enemies =
+-- position is the position of the thing that can collide with enemies
+enemyCollision : Vector -> List Champ -> Maybe Champ
+enemyCollision position enemies =
   let
     byDistance : Champ -> Float
     byDistance = \enemy ->
-      Vector.dist champ.position enemy.position
+      Vector.dist position enemy.position
   in
     enemies
     |> List.sortBy byDistance
@@ -39,26 +39,19 @@ enemyCollision champ enemies =
     |> \maybeEnemy ->
          Maybe.andThen maybeEnemy
           ( \enemy ->
-              if Vector.dist champ.position enemy.position <= 1 then
+              if Vector.dist position enemy.position <= 1 then
                 Just enemy
               else
                 Nothing
           )
 
 
-test : Dict String Champ -> Champ -> Maybe Collision
-test dict champ =
-  let
-    otherChamps =
-      dict
-      -- Cannot collide with self
-      |> Dict.remove champ.name
-      -- Cannot collide with the dead
-      |> Dict.filter (\_ enemy -> enemy.status /= Champ.Dead)
-      |> Dict.values
-  in
-    case enemyCollision champ otherChamps of
-      Just enemy ->
-        Just (Enemy enemy)
-      Nothing ->
-        Nothing
+-- Callsite is responsible for filtering `champs` down to a list of
+-- collidable champs.
+test : List Champ -> Vector -> Maybe Collision
+test champs position =
+  case enemyCollision position champs of
+    Just enemy ->
+      Just (Enemy enemy)
+    Nothing ->
+      Nothing

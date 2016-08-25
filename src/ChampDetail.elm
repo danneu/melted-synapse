@@ -68,7 +68,7 @@ view champ =
   []
   [ Html.h2
     []
-    [ Html.text (Class.toEmoji champ.class ++ " " ++ champ.name)
+    [ Html.text (Class.toIcon champ.class ++ " " ++ champ.name)
     ]
   , Html.p
     []

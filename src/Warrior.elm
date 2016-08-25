@@ -88,8 +88,15 @@ stepCharge angle champ dict =
       )
     position' =
       Vector.add champ.position velocity
+    enemies =
+      dict
+      -- Cannot collide with self
+      |> Dict.remove champ.name
+      -- Cannot collide with the dead
+      |> Dict.filter (\_ enemy -> enemy.status /= Champ.Dead)
+      |> Dict.values
   in
-    case Collision.test dict { champ | position = position' } of
+    case Collision.test enemies position' of
       Just (Collision.Enemy victim) ->
         let
           victim' =

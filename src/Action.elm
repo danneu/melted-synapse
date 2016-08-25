@@ -9,6 +9,7 @@ import Html.Attributes
 import Numeral
 -- 1st
 import Util
+import Vector exposing (Vector)
 
 
 --
@@ -31,7 +32,8 @@ type Action
   = Charge Angle
   --| WarCry Angle Duration
   -- RANGER
-  | Snipe Angle Duration
+  -- Snipe's vector is the current arrow position
+  | Snipe Angle Vector Duration
   -- GENERAL
   | Wait Duration
 
@@ -65,10 +67,19 @@ toHtml action =
           ]
           [ Html.text "→" ]
         ]
-    Snipe angle _ ->
+    Snipe angle _ _ ->
       let
         degrees =
           round (Util.toDegrees angle)
       in
-        Html.text
-        <| "Snipe " ++ Basics.toString degrees ++ "°"
+        Html.span
+        []
+        [ Html.text "Snipe "
+        , Html.span
+          [ Html.Attributes.style
+              [ ("display", "inline-block")
+              , ("transform", "rotate(" ++ Basics.toString degrees ++ "deg)")
+              ]
+          ]
+          [ Html.text "→" ]
+        ]

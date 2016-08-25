@@ -22,6 +22,7 @@ import Vector exposing (Vector)
 import Grid exposing (Grid)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
+import Class
 import Round exposing (Round)
 import Util.List
 import Constants
@@ -84,21 +85,29 @@ init =
     (kbModel, kbCmd) = KE.init
     -- Seeding the game with some demo champs to play with
     champs =
-      [ Champ.init "champ1" (6, 1) (75, 100)
+      [ Champ.init "champ1" Class.Warrior (6, 1) (75, 100)
         |> Champ.addWaypoint (6, 2) []
         |> Champ.addWaypoint (5, 5) []
-      , Champ.init "champ2" (4, 2) (14, 100)
+      , Champ.init "champ2" Class.Warrior (4, 2) (14, 100)
         |> Champ.addWaypoint (7, 4) []
-      , Champ.init "champ3" (5, 8) (92, 100)
+      , Champ.init "champ3" Class.Warrior (5, 8) (92, 100)
         |> Champ.addWaypoint (10, 9) []
-      , Champ.init "champ4" (7, 8) (42, 100)
+      , Champ.init "champ4" Class.Warrior (7, 8) (42, 100)
         |> Champ.addWaypoint (2, 9) []
-      , Champ.init "champ5" (8, 9) (22, 100)
-      , Champ.init "champ6" (10, 2) (100, 100)
-        |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 60)
+      , Champ.init "champ5" Class.Warrior (8, 9) (22, 100)
+      , Champ.init "champ6" Class.Warrior (10, 2) (100, 100)
+        |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 30)
                                      , Action.Charge (degrees 180)
                                      ]
         |> Champ.addWaypoint (7, 5) []
+      -- champ7 snipes champ8 and champ1, gets slain by champ6's charge
+      , Champ.init "champ7" Class.Ranger (2, 2) (50, 100)
+        |> Champ.addWaypoint (2, 3)
+            [ Action.Snipe (degrees 90) (2, 3) (1, 60)
+            , Action.Snipe (degrees 0) (2, 3) (1, 60)
+            ]
+        |> Champ.addWaypoint (3, 5) []
+      , Champ.init "champ8" Class.Warrior (2, 7) (35, 100)
       ]
       |> List.map (\ ({name} as champ) -> (name, champ))
       |> Dict.fromList
@@ -179,7 +188,7 @@ update msg model =
       let
         (sidebar', _) =
           Sidebar.update
-            (Sidebar.WaypointSelected champ.name waypoint)
+            (Sidebar.WaypointSelected champ waypoint)
             model.sidebar
       in
       ( { model
@@ -235,7 +244,7 @@ update msg model =
                   )
                 Just waypoint ->
                   ( WaypointSelected champ' waypoint
-                  , Sidebar.WaypointSelected champ'.name waypoint
+                  , Sidebar.WaypointSelected champ' waypoint
                   )
             (sidebar', _) =
               Sidebar.update sidebarMsg model.sidebar
@@ -418,9 +427,9 @@ update msg model =
                   case sidebar'.detail of
                     Sidebar.ChampDetail champ ->
                       ChampSelected champ
-                    Sidebar.WaypointDetail {champName, waypoint} ->
+                    Sidebar.WaypointDetail {champ, waypoint} ->
                       WaypointSelected
-                        (Util.forceUnwrap (Dict.get champName champs))
+                        (Util.forceUnwrap (Dict.get champ.name champs))
                         waypoint
                     _ ->
                       model.selection

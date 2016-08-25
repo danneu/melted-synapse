@@ -46,7 +46,7 @@ type OutMsg
 type Msg
   = Clear
   -- CHILDREN
-  | WaypointSelected String Waypoint
+  | WaypointSelected Champ Waypoint
   | ChampSelected Champ
   | WaypointDetailMsg WaypointDetail.Msg
   | ChampDetailMsg ChampDetail.Msg
@@ -60,9 +60,9 @@ update msg model =
     --
     -- WAYPOINT
     --
-    (WaypointSelected champName waypoint, _) ->
+    (WaypointSelected champ waypoint, _) ->
       ( { model
-            | detail = WaypointDetail (WaypointDetail.init champName waypoint)
+            | detail = WaypointDetail (WaypointDetail.init champ waypoint)
         }
       , NoOp
       )
@@ -92,7 +92,7 @@ update msg model =
         detail' =
           case childOutMsg of
             ChampDetail.SelectWaypoint waypoint ->
-              WaypointDetail (WaypointDetail.init childModel'.name waypoint)
+              WaypointDetail (WaypointDetail.init childModel' waypoint)
       in
       ( { model
             | detail = detail'
