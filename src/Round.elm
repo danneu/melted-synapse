@@ -30,18 +30,18 @@ type alias Round =
 
 
 -- A champ only moves if status == Moving
-moveChamp : String -> Dict String Champ -> Dict String Champ
-moveChamp name dict =
+moveChamp : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+moveChamp name (log, dict) =
   let
     champ = Util.forceUnwrap (Dict.get name dict)
   in
   if champ.status /= Champ.Moving then
-    dict
+    (log, dict)
   else
     case champ.waypoints of
       [] ->
         -- No more waypoints, so idle
-        Dict.insert name { champ | status = Champ.Idling } dict
+        (log, Dict.insert name { champ | status = Champ.Idling } dict)
       waypoint :: rest ->
         -- if champ is on a waypoint, transition into any action that's on the
         -- way point.
@@ -57,6 +57,7 @@ moveChamp name dict =
                     , waypoints = List.drop 1 champ.waypoints
                 }
                 dict
+              |> \dict -> (log, dict)
             action :: _ ->
               -- Waypoint had an action in queue, so transition into it
               let
@@ -82,6 +83,7 @@ moveChamp name dict =
                       , waypoints = waypoints'
                   }
                   dict
+                |> \dict -> (log, dict)
         else
           -- didn't hit a waypoint, so keep moving towards the next one
           let
@@ -97,26 +99,27 @@ moveChamp name dict =
               name
               (Champ.faceWaypoint { champ | position = position' })
               dict
+            |> \dict -> (log, dict)
 
 
 -- Checks champ for an action that is enqueued directly on them
 -- If there is one, it transitions to it.
-checkSelf : String -> Dict String Champ -> Dict String Champ
-checkSelf name dict =
+checkSelf : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+checkSelf name (log, dict) =
   let
     champ = Util.forceUnwrap (Dict.get name dict)
   in
     case champ.status of
       Champ.Dead ->
-        dict
+        (log, dict)
       Champ.ClassSpecific _ ->
-        dict
+        (log, dict)
       _ ->
         -- Can only start an action if idling/moving
         case champ.actions of
           [] ->
             -- No actions, nothing to do
-            dict
+            (log, dict)
           action :: rest ->
             let
               champ' =
@@ -125,7 +128,7 @@ checkSelf name dict =
                     , actions = rest
                 }
             in
-              Dict.insert name champ' dict
+              (log, Dict.insert name champ' dict)
 
 
 stepWaitAction : Action.Duration -> String -> Dict String Champ -> Dict String Champ
@@ -154,27 +157,26 @@ stepWaitAction (prevTicks, totalTicks) name dict =
 
 -- Should really be stepAction, only delegating to class if
 -- action is not general
-stepClass : String -> Class -> Dict String Champ -> Dict String Champ
-stepClass name class dict =
+stepClass : String -> Class -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepClass name class (log, dict) =
   let
     champ = Util.forceUnwrap (Dict.get name dict)
   in
   case champ.status of
     Champ.Dead ->
       -- the dead do nothing
-      dict
+      (log, dict)
     -- handle it here if it's a general action, else delegate to the class
     Champ.ClassSpecific (Champ.Acting (Action.Wait duration)) ->
-      stepWaitAction duration name dict
+      (log, stepWaitAction duration name dict)
     _ ->
       case class of
         Class.Warrior ->
-          Warrior.stepChamp name dict
+          Warrior.stepChamp name (log, dict)
         _ ->
-          Ranger.stepChamp name dict
+          Ranger.stepChamp name (log, dict)
 
 
--- TODO: This is getting really nasty.
 stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
 stepChamp name _ (log, dict) =
   let
@@ -186,11 +188,10 @@ stepChamp name _ (log, dict) =
       -- Skip champ if they are dead
       (log, dict)
     else
-      dict
+      (log, dict)
       |> (checkSelf name)
       |> (stepClass name champ.class)
       |> (moveChamp name)
-      |> (\d -> (log, d))
 
 
 stepTick : Int -> List Tick -> List Tick

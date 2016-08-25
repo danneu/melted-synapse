@@ -15,8 +15,8 @@ import Collision
 
 -- Calculate the arrow's new position, check and handle arrow
 -- collision with enemy
-stepSnipe : Float -> Vector -> Action.Duration -> Champ -> Dict String Champ -> Dict String Champ
-stepSnipe angle position (prevTicks, totalTicks) champ dict =
+stepSnipe : Float -> Vector -> Action.Duration -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepSnipe angle position (prevTicks, totalTicks) champ (log, dict) =
   let
     deltaTime =
       1/60
@@ -54,12 +54,19 @@ stepSnipe angle position (prevTicks, totalTicks) champ dict =
             { champ
                 | status = status'
             }
+          log' =
+            if victim'.status == Champ.Dead then
+              (champ.name ++ " killed " ++ victim'.name ++ " with Snipe 🎯")
+              :: log
+            else
+              log
         in
           dict
           -- Update the victim
           |> Dict.insert victim'.name victim'
           -- Update ranger
           |> Dict.insert champ.name champ'
+          |> \dict -> (log', dict)
       -- Wall ->
       _ ->
         -- No collision yet, so keep moving arrow
@@ -74,20 +81,20 @@ stepSnipe angle position (prevTicks, totalTicks) champ dict =
                 | status = status'
             }
         in
-          Dict.insert champ'.name champ' dict
+          (log, Dict.insert champ'.name champ' dict)
 
 
 
 
-stepChamp : String -> Dict String Champ -> Dict String Champ
-stepChamp name dict =
+stepChamp : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepChamp name (log, dict) =
   let
     champ =
       Util.forceUnwrap (Dict.get name dict)
   in
     case champ.status of
       Champ.Dead ->
-        dict
+        (log, dict)
       Champ.ClassSpecific classStatus ->
         case classStatus of
           Champ.Acting action ->
@@ -106,9 +113,9 @@ stepChamp name dict =
                           | status = status'
                       }
                   in
-                    Dict.insert champ'.name champ' dict
+                    (log, Dict.insert champ'.name champ' dict)
                 else
-                  stepSnipe angle arrow duration champ dict
+                  stepSnipe angle arrow duration champ (log, dict)
               _ ->
                 Debug.crash "Unexpected classStatus"
           _ ->
@@ -116,4 +123,4 @@ stepChamp name dict =
       _ ->
         -- Idling | Moving, so no-op since these are handled outside of
         -- the class handler
-        dict
+        (log, dict)

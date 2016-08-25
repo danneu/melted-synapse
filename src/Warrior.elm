@@ -36,8 +36,8 @@ tickAutoAttack champ (prevTick, tickDuration) victim dict =
     Dict.insert champ'.name champ' dict
 
 
-checkAutoAttack : Champ -> Dict String Champ -> Dict String Champ
-checkAutoAttack champ dict =
+checkAutoAttack : Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+checkAutoAttack champ (log, dict) =
   let
     attackRange =
       1 -- meters aka tiles
@@ -55,7 +55,7 @@ checkAutoAttack champ dict =
   in
     case champsInRange of
       [] ->
-        dict
+        (log, dict)
       victim :: _ ->
         let
           -- damage the victim
@@ -69,14 +69,21 @@ checkAutoAttack champ dict =
                 , angle =
                     Vector.angleTo champ.position victim'.position
             }
+          log' =
+            if victim'.status == Champ.Dead then
+              (champ.name ++ " killed " ++ victim'.name ++ " with AutoAttack 👊")
+              :: log
+            else
+              log
         in
           dict
           |> Dict.insert champ'.name champ'
           |> Dict.insert victim'.name victim'
+          |> \dict -> (log', dict)
 
 
-stepCharge : Float -> Champ -> Dict String Champ -> Dict String Champ
-stepCharge angle champ dict =
+stepCharge : Float -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepCharge angle champ (log, dict) =
   let
     deltaTime =
       1/60
@@ -114,12 +121,19 @@ stepCharge angle champ dict =
                     else
                       Champ.Moving
             }
+          log' =
+            if victim'.status == Champ.Dead then
+              (champ.name ++ " killed " ++ victim'.name ++ " with Charge 🚀")
+              :: log
+            else
+              log
         in
           dict
           -- Update the victim
           |> Dict.insert victim'.name victim'
           -- Stop moving the charging champ
           |> Dict.insert champ'.name champ'
+          |> \dict -> (log', dict)
       _ ->
         -- Keep moving the champ
         let
@@ -129,29 +143,29 @@ stepCharge angle champ dict =
                 , angle = angle
             }
         in
-          Dict.insert champ'.name champ' dict
+          (log, Dict.insert champ'.name champ' dict)
 
 
 
-stepChamp : String -> Dict String Champ -> Dict String Champ
-stepChamp name dict =
+stepChamp : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepChamp name (log, dict) =
   let
     champ =
       Util.forceUnwrap (Dict.get name dict)
   in
     case champ.status of
       Champ.Dead ->
-        dict
+        (log, dict)
       Champ.ClassSpecific classStatus ->
         case classStatus of
           Champ.AutoAttacking duration victim ->
-            tickAutoAttack champ duration victim dict
+            (log, tickAutoAttack champ duration victim dict)
           Champ.Acting action ->
             case action of
               Action.Charge angle ->
-                stepCharge angle champ dict
+                stepCharge angle champ (log, dict)
               _ ->
                 Debug.crash "Unexpected classStatus"
       _ ->
         -- Idling | Moving, so check if we can autoattack an enemy
-        checkAutoAttack champ dict
+        checkAutoAttack champ (log, dict)
