@@ -255,6 +255,7 @@ viewWaypoint maybeWaypoint onWaypointClick waypoint =
         [ Svg.Attributes.x (toString (x * tilesize + 3))
         , Svg.Attributes.y (toString (y * tilesize - 3 + tilesize))
         , Svg.Attributes.fill "white"
+        , Svg.Attributes.class "no-select"
         ]
         [ Svg.text (toString (List.length waypoint.actions))
         ]
@@ -495,6 +496,7 @@ view ctx champ =
                 [ Svg.Attributes.x (toString (x * tilesize))
                 , Svg.Attributes.y (toString (y * tilesize + marginTop + 25))
                 , Svg.Attributes.fill "white"
+                , Svg.Attributes.class "no-select"
                 ]
                 [
                 -- Icon is hard to see and is confusing next to the status emoji
