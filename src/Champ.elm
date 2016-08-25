@@ -432,6 +432,18 @@ view ctx champ =
               , Svg.Events.onClick (ctx.onChampClick champ)
               ]
               []
+          -- Show action count enqueued on the champ itself
+          , if List.isEmpty champ.actions then
+              Svg.text' [] []
+            else
+              Svg.text'
+              [ Svg.Attributes.x (toString (x * tilesize + 3))
+              , Svg.Attributes.y (toString (y * tilesize - 3 + tilesize))
+              , Svg.Attributes.fill "white"
+              , Svg.Attributes.class "no-select"
+              ]
+              [ Svg.text (toString (List.length champ.actions))
+              ]
           -- Show champ name and HP bar
           , let
               marginTop = -10
@@ -495,7 +507,7 @@ view ctx champ =
               , Svg.text'
                 [ Svg.Attributes.x (toString (x * tilesize))
                 , Svg.Attributes.y (toString (y * tilesize + marginTop + 25))
-                , Svg.Attributes.fill "white"
+                , Svg.Attributes.fill "#cccccc"
                 , Svg.Attributes.class "no-select"
                 ]
                 [

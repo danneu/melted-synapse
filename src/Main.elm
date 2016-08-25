@@ -26,7 +26,7 @@ import Class
 import Round exposing (Round)
 import Util.List
 import Constants
-import Action
+import Action exposing (Action)
 import Util
 import Sidebar
 import WaypointDetail
@@ -427,18 +427,24 @@ update msg model =
                   case sidebar'.detail of
                     Sidebar.ChampDetail champ ->
                       ChampSelected champ
-                    Sidebar.WaypointDetail {champ, waypoint} ->
-                      WaypointSelected
-                        (Util.forceUnwrap (Dict.get champ.name champs))
-                        waypoint
+                    Sidebar.WaypointDetail ({champ} as childModel) ->
+                      case childModel.waypoint of
+                        Nothing ->
+                          ChampSelected champ
+                        Just waypoint ->
+                          WaypointSelected
+                            (Util.forceUnwrap (Dict.get champ.name champs))
+                            waypoint
                     _ ->
                       model.selection
                 _ ->
                   model.selection
         model' =
           case outMsg of
-            Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateWaypoint champName waypoint) ->
-              updateWaypoint champName waypoint.position waypoint model
+            Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateChampActions champName actions) ->
+              updateChampActions champName actions model
+            Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateWaypointActions champName position actions) ->
+              updateWaypointActions champName position actions model
             _ ->
               model
       in
@@ -450,10 +456,11 @@ update msg model =
         )
 
 
+-- These two functions are nasty. Keep them in sync.
+
 -- No-ops unless game is in planning mode
--- Only allows for action updates for now
-updateWaypoint : String -> Vector -> Waypoint -> Model -> Model
-updateWaypoint champName position newWaypoint model =
+updateWaypointActions : String -> Vector -> List Action -> Model -> Model
+updateWaypointActions champName position actions model =
   case model.mode of
     Planning champs ->
       let
@@ -461,11 +468,27 @@ updateWaypoint champName position newWaypoint model =
           Util.forceUnwrap (Dict.get champName champs)
         updater = \oldWaypoint ->
           if oldWaypoint.position == position then
-            { oldWaypoint | actions = newWaypoint.actions }
+            { oldWaypoint | actions = actions }
           else
             oldWaypoint
         champ' =
           { champ | waypoints = List.map updater champ.waypoints }
+        champs' =
+          Dict.insert champName champ' champs
+      in
+        { model | mode = Planning champs' }
+    _ ->
+      model
+-- No-ops unless game is in planning mode
+updateChampActions : String -> List Action -> Model -> Model
+updateChampActions champName actions model =
+  case model.mode of
+    Planning champs ->
+      let
+        champ =
+          Util.forceUnwrap (Dict.get champName champs)
+        champ' =
+          { champ | actions = actions }
         champs' =
           Dict.insert champName champ' champs
       in

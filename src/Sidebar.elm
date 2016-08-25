@@ -15,6 +15,11 @@ import WaypointDetail
 import ChampDetail
 
 
+-- FIXME: Made big changes by merging ChampDetail into WaypontDetail to avoid
+-- having to rewrite action enqueue UI. Now ChampDetail is not used, and
+-- WaypointDetail is overloaded/fugly.
+
+
 -- MODEL
 
 
@@ -62,7 +67,7 @@ update msg model =
     --
     (WaypointSelected champ waypoint, _) ->
       ( { model
-            | detail = WaypointDetail (WaypointDetail.init champ waypoint)
+            | detail = WaypointDetail (WaypointDetail.init champ (Just waypoint))
         }
       , NoOp
       )
@@ -80,8 +85,13 @@ update msg model =
     -- CHAMP
     --
     (ChampSelected champ, _) ->
+      -- ( { model
+      --       | detail = ChampDetail (ChampDetail.init champ)
+      --   }
+      -- , NoOp
+      -- )
       ( { model
-            | detail = ChampDetail (ChampDetail.init champ)
+            | detail = WaypointDetail (WaypointDetail.init champ Nothing)
         }
       , NoOp
       )
@@ -92,7 +102,7 @@ update msg model =
         detail' =
           case childOutMsg of
             ChampDetail.SelectWaypoint waypoint ->
-              WaypointDetail (WaypointDetail.init childModel' waypoint)
+              WaypointDetail (WaypointDetail.init childModel' (Just waypoint))
       in
       ( { model
             | detail = detail'
