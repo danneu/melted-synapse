@@ -161,6 +161,7 @@ view ({champ} as model) =
               ("Waypoint " ++ (Vector.toString waypoint.position))
         )
     ]
+    -- Show the owner champ if it's a waypoint
   , if model.waypoint == Nothing then
       Html.text ""
     else
@@ -168,6 +169,30 @@ view ({champ} as model) =
       []
       [ Html.text ("Champ: " ++ champ.name)
       ]
+    -- Show champ HP if it's a champ panel
+  , if model.waypoint /= Nothing then
+      Html.text ""
+    else
+      let
+        (currHp, maxHp, _) = champ.hp
+        widthStyle =
+          (toString ((toFloat currHp / toFloat maxHp) * 100)) ++ "%"
+          |> Debug.log "widthStyle"
+      in
+        Html.div
+        [ Html.Attributes.class "progress" ]
+        [ Html.div
+          [ Html.Attributes.class "progress-bar"
+          , Html.Attributes.style
+              [ ("width", widthStyle)
+                -- min-width so that the bar is wide enough to read even
+                -- with low hp
+              , ("min-width", "75px")
+              ]
+          ]
+          [ Html.text (toString currHp ++ " / " ++ toString maxHp ++ " hp")
+          ]
+        ]
   , Html.h3 [] [ Html.text "Actions" ]
   , if List.isEmpty actions then
       Html.text "-- No Actions --"

@@ -94,7 +94,7 @@ init =
         |> Champ.addWaypoint (10, 9) []
       , Champ.init "champ4" Class.Warrior (7, 8) (42, 100) []
         |> Champ.addWaypoint (2, 9) []
-      , Champ.init "champ5" Class.Warrior (8, 9) (22, 100) []
+      , Champ.init "champ5" Class.Warrior (8, 9) (2, 100) []
       , Champ.init "champ6" Class.Warrior (10, 2) (100, 100) []
         |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 30)
                                      , Action.Charge (degrees 180)
