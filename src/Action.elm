@@ -38,7 +38,6 @@ type Action
   | Wait Duration
 
 
-
 -- User-friendly name of the action
 toHtml : Action -> Html msg
 toHtml action =

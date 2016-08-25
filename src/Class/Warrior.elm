@@ -85,7 +85,7 @@ stepCharge angle champ (log, dict) =
     deltaTime =
       1/60
     chargeSpeed =
-      5
+      6
     velocity =
       ( chargeSpeed * cos angle * deltaTime
       , chargeSpeed * sin angle * deltaTime
@@ -133,7 +133,6 @@ stepCharge angle champ (log, dict) =
             }
         in
           (log, Dict.insert champ'.name champ' dict)
-
 
 
 stepChamp : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)

@@ -8,6 +8,7 @@
     ],
     "exposed-modules": [],
     "dependencies": {
+        "eeue56/elm-all-dict": "1.1.2 <= v < 2.0.0",
         "elm-community/array-extra": "1.0.1 <= v < 2.0.0",
         "elm-community/html-extra": "2.0.0 <= v < 3.0.0",
         "elm-community/list-extra": "3.1.0 <= v < 4.0.0",

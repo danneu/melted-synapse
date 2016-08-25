@@ -13,6 +13,7 @@ import Util
 import Class exposing (Class)
 import Class.Warrior
 import Class.Ranger
+import Cooldowns
 import Action
 
 
@@ -68,31 +69,37 @@ moveChamp name (log, dict) =
                 dict
               |> \dict -> (log, dict)
             action :: _ ->
-              -- Waypoint had an action in queue, so transition into it
-              let
-                _ = Debug.log "action consumed" action
-                -- update waypoint actions
-                waypoint' =
-                  { waypoint
-                      | actions = List.drop 1 waypoint.actions
-                  }
-                waypoints' =
-                  -- If we consumed the waypoint's last action, then consume
-                  -- the waypoint.
-                  if List.isEmpty waypoint'.actions then
-                    rest
-                  else
-                    waypoint' :: rest
-              in
-                Dict.insert
-                  name
-                  { champ
-                      | position = waypoint.position
-                      , status = Champ.ClassSpecific (Champ.Acting action)
-                      , waypoints = waypoints'
-                  }
-                  dict
-                |> \dict -> (log, dict)
+              -- Waypoint had an action in queue,
+              if not (Cooldowns.isCool champ.cooldowns action) then
+                -- Action is not yet cooled down, so idle until it is
+                (log, Dict.insert name { champ | status = Champ.Idling } dict)
+              else
+                -- Action is cooled down, so consume it
+                let
+                  _ = Debug.log "action consumed" action
+                  -- update waypoint actions
+                  waypoint' =
+                    { waypoint
+                        | actions = List.drop 1 waypoint.actions
+                    }
+                  waypoints' =
+                    -- If we consumed the waypoint's last action, then consume
+                    -- the waypoint.
+                    if List.isEmpty waypoint'.actions then
+                      rest
+                    else
+                      waypoint' :: rest
+                in
+                  Dict.insert
+                    name
+                    { champ
+                        | position = waypoint.position
+                        , status = Champ.ClassSpecific (Champ.Acting action)
+                        , waypoints = waypoints'
+                        , cooldowns = Cooldowns.heatUp champ.cooldowns action
+                    }
+                    dict
+                  |> \dict -> (log, dict)
         else
           -- didn't hit a waypoint, so keep moving towards the next one
           let
@@ -124,20 +131,26 @@ checkSelf name (log, dict) =
       Champ.ClassSpecific _ ->
         (log, dict)
       _ ->
-        -- Can only start an action if idling/moving
+        -- Can only start an action if idling/moving AND if action is cooled
         case champ.actions of
           [] ->
             -- No actions, nothing to do
             (log, dict)
           action :: rest ->
-            let
-              champ' =
-                { champ
-                    | status = Champ.ClassSpecific (Champ.Acting action)
-                    , actions = rest
-                }
-            in
-              (log, Dict.insert name champ' dict)
+            if not (Cooldowns.isCool champ.cooldowns action) then
+              -- Action is still cooling down
+              (log, Dict.insert name { champ | status = Champ.Idling } dict)
+            else
+              -- Action is cooled down and ready to use
+              let
+                champ' =
+                  { champ
+                      | status = Champ.ClassSpecific (Champ.Acting action)
+                      , actions = rest
+                      , cooldowns = Cooldowns.heatUp champ.cooldowns action
+                  }
+              in
+                (log, Dict.insert name champ' dict)
 
 
 stepWaitAction : Action.Duration -> String -> Dict String Champ -> Dict String Champ
@@ -183,6 +196,16 @@ stepClass name class (log, dict) =
           Class.Ranger.stepChamp name (log, dict)
 
 
+stepCooldowns : String -> (List String, Dict String Champ) -> (List String, Dict String Champ)
+stepCooldowns name (log, dict) =
+  let
+    champ = Util.forceUnwrap (Dict.get name dict)
+    champ' = { champ | cooldowns = Cooldowns.tick champ.cooldowns }
+  in
+    (log, Dict.insert name champ' dict)
+
+
+
 stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)
 stepChamp name _ (log, dict) =
   let
@@ -195,6 +218,7 @@ stepChamp name _ (log, dict) =
       (log, dict)
     else
       (log, dict)
+      |> (stepCooldowns name)
       |> (checkSelf name)
       |> (stepClass name champ.class)
       |> (moveChamp name)

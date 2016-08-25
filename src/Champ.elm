@@ -15,6 +15,7 @@ import Constants exposing (tilesize)
 import Action exposing (Action)
 import Class exposing (Class)
 import Util
+import Cooldowns exposing (Cooldowns)
 
 
 type ClassStatus
@@ -32,7 +33,8 @@ type Status
   -- Champ is in the middle of its autoattack animation
   -- Holds the current tick and the total tick count of the status
   -- and also holds the target champ
-  --| AutoAttacking (Int, Int) Champ
+  -- FIXME: "ClassSpecific" isn't a good name since ClassStatus now has
+  --        actions that can be used by all classes, like Wait
   | ClassSpecific ClassStatus
   | Dead
 
@@ -50,6 +52,8 @@ type alias Champ =
   , class : Class
     -- Like waypoints, you can enqueue actions directly on the champ
   , actions : List Action
+    -- Cooldown system
+  , cooldowns : Cooldowns
   }
 
 
@@ -65,6 +69,7 @@ init name class position (currHp, maxHp) actions =
   , waypoints = []
   , actions = actions
   , class = class
+  , cooldowns = Cooldowns.init class
   }
 
 
