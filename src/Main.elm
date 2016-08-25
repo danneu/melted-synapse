@@ -85,29 +85,27 @@ init =
     (kbModel, kbCmd) = KE.init
     -- Seeding the game with some demo champs to play with
     champs =
-      [ Champ.init "champ1" Class.Warrior (6, 1) (75, 100)
+      [ Champ.init "champ1" Class.Warrior (6, 1) (75, 100) []
         |> Champ.addWaypoint (6, 2) []
         |> Champ.addWaypoint (5, 5) []
-      , Champ.init "champ2" Class.Warrior (4, 2) (14, 100)
+      , Champ.init "champ2" Class.Warrior (4, 2) (14, 100) []
         |> Champ.addWaypoint (7, 4) []
-      , Champ.init "champ3" Class.Warrior (5, 8) (92, 100)
+      , Champ.init "champ3" Class.Warrior (5, 8) (92, 100) []
         |> Champ.addWaypoint (10, 9) []
-      , Champ.init "champ4" Class.Warrior (7, 8) (42, 100)
+      , Champ.init "champ4" Class.Warrior (7, 8) (42, 100) []
         |> Champ.addWaypoint (2, 9) []
-      , Champ.init "champ5" Class.Warrior (8, 9) (22, 100)
-      , Champ.init "champ6" Class.Warrior (10, 2) (100, 100)
+      , Champ.init "champ5" Class.Warrior (8, 9) (22, 100) []
+      , Champ.init "champ6" Class.Warrior (10, 2) (100, 100) []
         |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 30)
                                      , Action.Charge (degrees 180)
                                      ]
         |> Champ.addWaypoint (7, 5) []
       -- champ7 snipes champ8 and champ1, gets slain by champ6's charge
       , Champ.init "champ7" Class.Ranger (2, 2) (50, 100)
-        |> Champ.addWaypoint (2, 3)
-            [ Action.Snipe (degrees 90) (2, 3) (1, 60)
-            , Action.Snipe (degrees 0) (2, 3) (1, 60)
-            ]
+          [ Action.Snipe (degrees 90) (2, 2) (1, 60) ]
+        |> Champ.addWaypoint (2, 3) [ Action.Snipe (degrees 0) (2, 3) (1, 60) ]
         |> Champ.addWaypoint (3, 5) []
-      , Champ.init "champ8" Class.Warrior (2, 7) (35, 100)
+      , Champ.init "champ8" Class.Warrior (2, 7) (35, 100) []
       ]
       |> List.map (\ ({name} as champ) -> (name, champ))
       |> Dict.fromList

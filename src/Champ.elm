@@ -54,8 +54,8 @@ type alias Champ =
 
 
 -- Convenience function for creating champs
-init : String -> Class -> Vector -> (Int, Int) -> Champ
-init name class position (currHp, maxHp) =
+init : String -> Class -> Vector -> (Int, Int) -> List Action -> Champ
+init name class position (currHp, maxHp) actions =
   { name = name
   , status = Idling
   , hp = (currHp, maxHp, 0)
@@ -63,7 +63,7 @@ init name class position (currHp, maxHp) =
   , speed = 2
   , angle = 0
   , waypoints = []
-  , actions = []
+  , actions = actions
   , class = class
   }
 
