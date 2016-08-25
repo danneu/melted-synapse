@@ -11,8 +11,8 @@ import Champ exposing (Champ)
 import Vector
 import Util
 import Class exposing (Class)
-import Warrior
-import Ranger
+import Class.Warrior
+import Class.Ranger
 import Action
 
 
@@ -172,9 +172,9 @@ stepClass name class (log, dict) =
     _ ->
       case class of
         Class.Warrior ->
-          Warrior.stepChamp name (log, dict)
+          Class.Warrior.stepChamp name (log, dict)
         _ ->
-          Ranger.stepChamp name (log, dict)
+          Class.Ranger.stepChamp name (log, dict)
 
 
 stepChamp : String -> Champ -> (List String, Dict String Champ) -> (List String, Dict String Champ)

@@ -1,6 +1,6 @@
 
 
-module Ranger exposing  (..)
+module Class.Ranger exposing  (..)
 
 
 -- Elm

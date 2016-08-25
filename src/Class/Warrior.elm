@@ -1,6 +1,6 @@
 
 
-module Warrior exposing  (..)
+module Class.Warrior exposing  (..)
 
 
 -- Elm
