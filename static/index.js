@@ -270,7 +270,8 @@ var loader = new PxLoader()
 // misc
 
 ;[
-  './img/tombstone.png'
+  './img/tombstone.png',
+  './img/arrow1.png',
 ].forEach(function (path) {
   loader.addImage(path)
 })
