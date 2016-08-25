@@ -170,15 +170,12 @@ view ({champ} as model) =
       ]
   , Html.h3 [] [ Html.text "Actions" ]
   , if List.isEmpty actions then
-      Html.text "No Actions"
+      Html.text "-- No Actions --"
     else
       Html.ol
       []
       (List.indexedMap viewAction actions)
-  , Html.p [] [ Html.text "Add an action" ]
-  , Html.p
-    [ Html.Attributes.style [ ("font-style", "italic") ] ]
-    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons, and implement slider for wait duration." ]
+  , Html.h4 [] [ Html.text "Add an action" ]
   , Html.ul
     []
     [ -- GENERAL
@@ -242,4 +239,7 @@ view ({champ} as model) =
           [ Html.text "→" ]
         ]
     ]
+  , Html.p
+    [ Html.Attributes.style [ ("font-style", "italic") ] ]
+    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons, and implement slider for wait duration." ]
   ]
