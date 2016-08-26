@@ -226,71 +226,73 @@ view ({champ} as model) =
       Html.text "-- No Actions --"
     else
       Html.ol
-      []
+      [ Html.Attributes.class "list-unstyled" ]
       (List.indexedMap viewAction actions)
   , Html.h4 [] [ Html.text "Add an action" ]
-  , Html.ul
-    []
-    [ -- GENERAL
-      Html.li
+  , if List.length actions == 5 then
+      Html.text "-- Cannot enqueue more than 5 actions --"
+    else
+      Html.ul
       []
-      [ Html.text "⌛ Wait: "
-      , Html.br [] []
-      , Html.button
-        [ Html.Events.onClick (AddAction (Action.Wait (1, 30))) ]
-        [ Html.text "0.5 sec" ]
-      , Html.button
-        [ Html.Events.onClick (AddAction (Action.Wait (1, 60))) ]
-        [ Html.text "1 sec" ]
-      , Html.button
-        [ Html.Events.onClick (AddAction (Action.Wait (1, 90))) ]
-        [ Html.text "1.5 sec" ]
-      , Html.button
-        [ Html.Events.onClick (AddAction (Action.Wait (1, 120))) ]
-        [ Html.text "2 sec" ]
-      ]
-      -- WARRIOR
-    , if champ.class /= Class.Warrior then
-        Html.text ""
-      else
+      [ -- GENERAL
         Html.li
         []
-        [ Html.button
-          [ let
-              update = \ (candidate, action) ->
-                case candidate of
-                  Aiming.Ray angle ->
-                    Action.Charge angle
-            in
-              Html.Events.onClick
-                (StartAiming 0 (Action.Charge 0) update)
-          ]
-          [ Html.text "🚀 Charge"
-          ]
-        ]
-      -- RANGER
-    , if champ.class /= Class.Ranger then
-        Html.text ""
-      else
-        Html.li
-        []
-        [ Html.text "🎯 Snipe: "
+        [ Html.text "⌛ Wait: "
         , Html.br [] []
         , Html.button
-          [ Html.Events.onClick (AddAction (Action.Snipe (degrees 180) position (1, 60))) ]
-          [ Html.text "←" ]
+          [ Html.Events.onClick (AddAction (Action.Wait (1, 30))) ]
+          [ Html.text "0.5 sec" ]
         , Html.button
-          [ Html.Events.onClick (AddAction (Action.Snipe (degrees 270) position (1, 60))) ]
-          [ Html.text "↑" ]
+          [ Html.Events.onClick (AddAction (Action.Wait (1, 60))) ]
+          [ Html.text "1 sec" ]
         , Html.button
-          [ Html.Events.onClick (AddAction (Action.Snipe (degrees 90) position (1, 60))) ]
-          [ Html.text "↓" ]
+          [ Html.Events.onClick (AddAction (Action.Wait (1, 90))) ]
+          [ Html.text "1.5 sec" ]
         , Html.button
-          [ Html.Events.onClick (AddAction (Action.Snipe (degrees 0) position (1, 60))) ]
-          [ Html.text "→" ]
+          [ Html.Events.onClick (AddAction (Action.Wait (1, 120))) ]
+          [ Html.text "2 sec" ]
         ]
+        -- WARRIOR
+      , if champ.class /= Class.Warrior then
+          Html.text ""
+        else
+          Html.li
+          []
+          [ Html.button
+            [ let
+                update = \ (candidate, action) ->
+                  case candidate of
+                    Aiming.Ray angle ->
+                      Action.Charge angle
+              in
+                Html.Events.onClick
+                  (StartAiming 0 (Action.Charge 0) update)
+            ]
+            [ Html.text "🚀 Charge"
+            ]
+          ]
+        -- RANGER
+      , if champ.class /= Class.Ranger then
+          Html.text ""
+        else
+          Html.li
+          []
+          [ Html.button
+            [ let
+                update = \ (candidate, prevAction) ->
+                  case prevAction of
+                    Action.Snipe _ vector duration ->
+                      case candidate of
+                        Aiming.Ray angle ->
+                          Action.Snipe angle vector duration
+                    _ ->
+                      Debug.crash "Impossible"
+              in
+                Html.Events.onClick
+                  (StartAiming 0 (Action.Snipe 0 position (1, 60)) update)
+            ]
+            [ Html.text "🎯 Snipe"
+            ]
+          ]
     ]
-  , Html.p
-    [ Html.Attributes.style [ ("font-style", "italic") ] ]
-    [ Html.text "TODO: Implement charge angle UI instead of cardinal direction buttons, and implement slider for wait duration." ]
   ]
