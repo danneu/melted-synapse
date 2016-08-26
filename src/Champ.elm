@@ -254,16 +254,22 @@ viewWaypoint maybeWaypoint onWaypointClick waypoint =
             ]
         )
       []
+      -- Display the actions enqueued at this point
     , if List.isEmpty waypoint.actions then
         Svg.text' [] []
       else
         Svg.text'
-        [ Svg.Attributes.x (toString (x * tilesize + 3))
+        [ Svg.Attributes.x (toString (x * tilesize))
         , Svg.Attributes.y (toString (y * tilesize - 3 + tilesize))
         , Svg.Attributes.fill "white"
         , Svg.Attributes.class "no-select"
+        , Svg.Attributes.style "font-size: 12px"
         ]
-        [ Svg.text (toString (List.length waypoint.actions))
+        [ --Svg.text (toString (List.length waypoint.actions))
+          Svg.text
+            ( List.map Action.toIcon waypoint.actions
+              |> String.join ""
+            )
         ]
     ]
 
@@ -458,12 +464,16 @@ view ctx champ =
               Svg.text' [] []
             else
               Svg.text'
-              [ Svg.Attributes.x (toString (x * tilesize + 3))
+              [ Svg.Attributes.x (toString (x * tilesize))
               , Svg.Attributes.y (toString (y * tilesize - 3 + tilesize))
               , Svg.Attributes.fill "white"
               , Svg.Attributes.class "no-select"
+              , Svg.Attributes.style "font-size: 12px"
               ]
-              [ Svg.text (toString (List.length champ.actions))
+              [ Svg.text
+                  ( List.map Action.toIcon champ.actions
+                    |> String.join ""
+                  )
               ]
           -- Show champ name and HP bar
           , let

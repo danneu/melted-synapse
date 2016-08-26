@@ -151,9 +151,10 @@ viewAction idx action =
   [ Html.button
     [ Html.Events.onClick (RemoveAction idx)
     , Html.Attributes.class "btn btn-danger btn-xs"
-    , Html.Attributes.style [ ("margin-right", "5px") ]
+    , Html.Attributes.style [ ("margin-right", "10px") ]
     ]
     [ Html.text "X" ]
+  , Html.text ((Action.toIcon action) ++ " ")
   , Action.toHtml action
   ]
 
