@@ -201,7 +201,7 @@ statusToSimpleName status =
           "AutoAttacking"
         Acting action ->
           case action of
-            Action.Charge _ ->
+            Action.Charge _ _ ->
               "Charging"
             Action.Snipe _ _ _ ->
               "Sniping"
@@ -394,6 +394,26 @@ view ctx champ =
               []
             else
               Svg.text' [] []
+            -- If champ is charging, draw a trail from its origin
+          , case champ.status of
+              ClassSpecific (Acting (Action.Charge _ (originX, originY))) ->
+                let
+                  (champX, champY) =
+                    champ.position
+                in
+                  Svg.line
+                  [ Svg.Attributes.x1 (toString (originX * tilesize + tilesize / 2))
+                  , Svg.Attributes.y1 (toString (originY * tilesize + tilesize / 2))
+                  , Svg.Attributes.x2 (toString (champX * tilesize + tilesize / 2))
+                  , Svg.Attributes.y2 (toString (champY * tilesize + tilesize / 2))
+                  , Svg.Attributes.stroke "yellow"
+                  , Svg.Attributes.strokeDasharray "5, 5"
+                  , Svg.Attributes.strokeWidth "5"
+                  ]
+                  []
+              _ ->
+                Svg.text ""
+            -- Draw the champ
           , let
               degrees =
                 Util.toDegrees spriteAngle

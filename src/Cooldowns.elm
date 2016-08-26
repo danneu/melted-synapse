@@ -19,7 +19,7 @@ ord action =
     Action.Wait _ ->
       0
     -- WARRIOR
-    Action.Charge _ ->
+    Action.Charge _ _ ->
       1
     -- RANGER
     Action.Snipe _ _ _ ->
@@ -34,7 +34,7 @@ duration action =
     Action.Wait _ ->
       0
     -- WARRIOR
-    Action.Charge _ ->
+    Action.Charge _ _ ->
       60
     -- RANGER
     Action.Snipe _ _ _ ->
@@ -66,7 +66,7 @@ init class =
     classAbilities =
       case class of
         Class.Warrior ->
-          [ let ability = Action.Charge 0 in
+          [ let ability = Action.Charge 0 (0, 0) in
               (ability, (Nothing, duration ability))
           ]
         Class.Ranger ->

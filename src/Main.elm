@@ -103,7 +103,7 @@ init =
       , Champ.init "champ5" Class.Warrior (8, 9) (2, 100) []
       , Champ.init "champ6" Class.Warrior (10, 2) (100, 100) []
         |> Champ.addWaypoint (10, 4) [ Action.Wait (1, 30)
-                                     , Action.Charge (degrees 180)
+                                     , Action.Charge (degrees 180) (10, 4)
                                      ]
         |> Champ.addWaypoint (7, 5) []
       -- champ7 snipes champ8 and champ1, gets slain by champ6's charge

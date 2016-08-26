@@ -29,7 +29,8 @@ type alias Duration =
 -- TODO: Will there be General actions not specific to a class?
 type Action
   -- WARRIOR
-  = Charge Angle
+  -- Charge vector is the origin position
+  = Charge Angle Vector
   --| WarCry Angle Duration
   -- RANGER
   -- Snipe's vector is the current arrow position
@@ -41,7 +42,7 @@ type Action
 toIcon : Action -> String
 toIcon action =
   case action of
-    Charge _ ->
+    Charge _ _ ->
       "🚀"
     Snipe _ _ _ ->
       "🎯"
@@ -61,7 +62,7 @@ toHtml action =
           if seconds == 1 then " second" else " seconds"
       in
         Html.text ("Wait " ++ Numeral.format "0[.]0" seconds ++ suffix)
-    Charge angle ->
+    Charge angle _ ->
       let
         degrees =
           round (Util.toDegrees angle)

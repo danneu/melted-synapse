@@ -150,7 +150,7 @@ stepChamp name (log, dict) =
             (log, tickAutoAttack champ duration victim dict)
           Champ.Acting action ->
             case action of
-              Action.Charge angle ->
+              Action.Charge angle _ ->
                 stepCharge angle champ (log, dict)
               _ ->
                 Debug.crash "Unexpected classStatus"

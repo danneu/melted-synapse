@@ -261,12 +261,16 @@ view ({champ} as model) =
           [ Html.button
             [ let
                 update = \ (candidate, action) ->
-                  case candidate of
-                    Aiming.Ray angle ->
-                      Action.Charge angle
+                  case action of
+                    Action.Charge _ origin ->
+                      case candidate of
+                        Aiming.Ray angle ->
+                          Action.Charge angle origin
+                    _ ->
+                      Debug.crash "Impossible"
               in
                 Html.Events.onClick
-                  (StartAiming 0 (Action.Charge 0) update)
+                  (StartAiming 0 (Action.Charge 0 position) update)
             ]
             [ Html.text "🚀 Charge"
             ]
