@@ -38,6 +38,17 @@ type Action
   | Wait Duration
 
 
+toIcon : Action -> String
+toIcon action =
+  case action of
+    Charge _ ->
+      "🚀"
+    Snipe _ _ _ ->
+      "🎯"
+    Wait _ ->
+      "⌛"
+
+
 -- User-friendly name of the action
 toHtml : Action -> Html msg
 toHtml action =

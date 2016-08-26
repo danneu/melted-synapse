@@ -12,7 +12,7 @@ import Task
 import Dict exposing (Dict)
 import Array exposing (Array)
 import Json.Encode as JE
-import Json.Decode as JD
+import Json.Decode as JD exposing ((:=))
 import Time
 -- 3rd
 import Keyboard.Extra as KE
@@ -30,6 +30,7 @@ import Action exposing (Action)
 import Util
 import Sidebar
 import WaypointDetail
+import Aiming
 
 
 -- MODEL
@@ -51,9 +52,14 @@ type Playback
   = Playing
   | Paused
 
+type alias PlanningState =
+  { champs : Dict String Champ
+  , aiming : Maybe Aiming.Aiming
+  }
+
 
 type Mode
-  = Planning (Dict String Champ)
+  = Planning PlanningState
   -- Int is current tick (0 to ticksPerRound-1)
   -- Tick 0 is the original state pre-simulation which can be used to
   -- transition back into planning mode.
@@ -115,8 +121,9 @@ init =
     , cols = cols
     , position = Mouse.Position 50 50
     , drag = Nothing
-    , scale = 0.80
-    , mode = Planning champs
+    --, scale = 0.80
+    , scale = 1
+    , mode = Planning { champs = champs, aiming = Nothing }
     , keyboard = kbModel
     , selection = None
     , showCoords = False
@@ -137,6 +144,7 @@ type Msg
   | AddWaypoint Int Int Champ
   | RemoveWaypoint Champ
   | ClearSelection
+  | ApplyAiming
   -- SIMULATION
   | Pause
   | Unpause
@@ -146,15 +154,15 @@ type Msg
   | DragStart Mouse.Position
   | DragAt Mouse.Position
   | DragEnd Mouse.Position
-  -- KEYBOARD
+  -- KEYBOARD / MOUSE
   | Keyboard KE.Msg
+  | MouseMove Mouse.Position
   -- ZOOM
   | Zoom Float
   -- DEBUG
   | ToggleCoords
   -- CHILDREN
   | SidebarMsg Sidebar.Msg
-
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -202,7 +210,7 @@ update msg model =
       case model.mode of
         Simulating _ _ _ ->
           (model, Cmd.none)
-        Planning champs ->
+        Planning {champs} ->
           let
             waypoint =
               Waypoint.empty (toFloat x, toFloat y)
@@ -215,7 +223,7 @@ update msg model =
               Dict.insert champ'.name champ' champs
           in
             ( { model
-                  | mode = Planning champs'
+                  | mode = Planning { champs = champs', aiming = Nothing }
                   , selection = WaypointSelected champ' waypoint
               }
             , Cmd.none
@@ -225,7 +233,7 @@ update msg model =
       case model.mode of
         Simulating _ _ _ ->
           (model, Cmd.none)
-        Planning champs ->
+        Planning {champs} ->
           let
             -- Drop the last waypoint
             waypoints' =
@@ -250,7 +258,7 @@ update msg model =
               Dict.insert champ'.name champ' champs
           in
             ( { model
-                  | mode = Planning champs'
+                  | mode = Planning { champs = champs', aiming = Nothing }
                   , selection = selection'
                   , sidebar = sidebar'
               }
@@ -267,6 +275,139 @@ update msg model =
           }
         , Cmd.none
         )
+    -- FIXME: The following case is this project's current record holder
+    -- for nastiest code, a record I will easily break many more times.
+    ApplyAiming ->
+      -- Only works for planning mode
+      case model.mode of
+        Planning state ->
+          let
+            champs' =
+              case (state.aiming, model.selection) of
+                (Nothing, _) ->
+                  state.champs
+                (_, None) ->
+                  state.champs
+                (Just aiming, ChampSelected champ) ->
+                  case aiming.mode of
+                    Aiming.New ->
+                      -- Add action to champ
+                      let
+                        champ' =
+                          { champ
+                              | actions = List.append champ.actions [aiming.action]
+                          }
+                      in
+                        Dict.insert champ.name champ' state.champs
+                    Aiming.Edit idx ->
+                      -- Modify champ action
+                      let
+                        champ' =
+                          { champ
+                              | actions =
+                                  List.Extra.setAt idx aiming.action champ.actions
+                                  |> Maybe.withDefault champ.actions
+                          }
+                      in
+                        Dict.insert champ.name champ' state.champs
+                (Just aiming, WaypointSelected champ waypoint) ->
+                  case aiming.mode of
+                    Aiming.New ->
+                      -- Add action to waypoint
+                      let
+                        waypoint' =
+                          { waypoint
+                              | actions =
+                                  List.append waypoint.actions [aiming.action]
+                          }
+                        waypoints' =
+                          List.map
+                            ( \old ->
+                                if old.position == waypoint.position then
+                                  waypoint'
+                                else
+                                  old
+                            )
+                            champ.waypoints
+                        champ' =
+                          { champ
+                              | waypoints = waypoints'
+                          }
+                      in
+                        Dict.insert champ'.name champ' state.champs
+                    Aiming.Edit idx ->
+                      -- Modify waypoint action
+                      let
+                        waypoint' =
+                          { waypoint
+                              | actions =
+                                  List.Extra.setAt idx aiming.action waypoint.actions
+                                  |> Maybe.withDefault waypoint.actions
+                          }
+                        waypoints' =
+                          List.map
+                            ( \old ->
+                                if old.position == waypoint.position then
+                                  waypoint'
+                                else
+                                  old
+                            )
+                            champ.waypoints
+                        champ' =
+                          { champ
+                              | waypoints = waypoints'
+                          }
+                      in
+                        Dict.insert champ'.name champ' state.champs
+            state' =
+               { state
+                   | aiming = Nothing
+                   , champs = champs'
+               }
+            -- Update selection/sidebar from the update above.
+            -- This is getting nasty.
+            -- FIXME: once this stuff settles down.
+            (selection', sidebar') =
+              case model.selection of
+                ChampSelected {name} ->
+                  let
+                    champ' =
+                      (Util.forceUnwrap (Dict.get name champs'))
+                  in
+                    ( ChampSelected  champ'
+                    , Sidebar.update (Sidebar.ChampSelected champ') model.sidebar
+                      |> fst
+                    )
+                WaypointSelected {name} waypoint ->
+                  let
+                    champ' =
+                      (Util.forceUnwrap (Dict.get name champs'))
+                    waypoint' =
+                      List.Extra.find
+                        (\prev -> prev.position == waypoint.position)
+                        champ'.waypoints
+                      |> Util.forceUnwrap
+                  in
+                    ( WaypointSelected champ' waypoint'
+                    , Sidebar.update
+                        (Sidebar.WaypointSelected champ' waypoint')
+                        model.sidebar
+                      |> fst
+                    )
+                _ ->
+                  ( model.selection
+                  , model.sidebar
+                  )
+            model' =
+              { model
+                  | mode = Planning state'
+                  , selection = selection'
+                  , sidebar = sidebar'
+              }
+          in
+            (model', Cmd.none)
+        _ ->
+          (model, Cmd.none)
     Pause ->
       let
         mode' =
@@ -303,7 +444,7 @@ update msg model =
       let
         mode' =
           case model.mode of
-            Planning champs ->
+            Planning {champs} ->
               --Simulating Paused 0 (Round.simulate champs)
               Simulating Playing 0 (Round.simulate Constants.ticksPerRound champs)
             Simulating _ _ round ->
@@ -311,7 +452,7 @@ update msg model =
                 Nothing ->
                   Debug.crash "Impossible"
                 Just tick ->
-                  Planning tick.champs
+                  Planning { champs = tick.champs, aiming = Nothing }
       in
         ( { model | mode = mode' }
         , Cmd.none
@@ -393,6 +534,40 @@ update msg model =
             , Task.perform identity identity (Task.succeed spaceMsg)
             ]
         )
+    MouseMove ({x, y} as position) ->
+      let _ = Debug.log "MouseMove" position in
+      -- used to update aiming
+      case model.mode of
+        Planning state ->
+          case state.aiming of
+            Nothing ->
+              (model, Cmd.none)
+            Just aiming ->
+              let
+                aiming' =
+                  case aiming.candidate of
+                    Aiming.Ray _ ->
+                      let
+                        originPx =
+                          coordsToGlobalPx model aiming.origin
+                        angle' =
+                          Vector.angleTo originPx (toFloat x, toFloat y)
+                      in
+                        { aiming
+                            | candidate =
+                                Aiming.Ray angle'
+                            , action =
+                                aiming.update (aiming.candidate, aiming.action)
+
+                        }
+                mode' =
+                  Planning { state | aiming = Just aiming' }
+              in
+                ( { model | mode = mode' }
+                , Cmd.none
+                )
+        _ ->
+          (model, Cmd.none)
     -- ZOOM
     Zoom amount ->
       ( { model
@@ -421,7 +596,7 @@ update msg model =
               None
             _ ->
               case model.mode of
-                Planning champs ->
+                Planning {champs} ->
                   case sidebar'.detail of
                     Sidebar.ChampDetail champ ->
                       ChampSelected champ
@@ -443,6 +618,15 @@ update msg model =
               updateChampActions champName actions model
             Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateWaypointActions champName position actions) ->
               updateWaypointActions champName position actions model
+            Sidebar.WaypointDetailOutMsg (WaypointDetail.UpdateAiming aiming) ->
+              case model.mode of
+                Planning state ->
+                  let
+                    state' = { state | aiming = aiming }
+                  in
+                    { model | mode = Planning state' }
+                _ ->
+                  model
             _ ->
               model
       in
@@ -460,7 +644,7 @@ update msg model =
 updateWaypointActions : String -> Vector -> List Action -> Model -> Model
 updateWaypointActions champName position actions model =
   case model.mode of
-    Planning champs ->
+    Planning {champs} ->
       let
         champ =
           Util.forceUnwrap (Dict.get champName champs)
@@ -474,14 +658,14 @@ updateWaypointActions champName position actions model =
         champs' =
           Dict.insert champName champ' champs
       in
-        { model | mode = Planning champs' }
+        { model | mode = Planning { champs = champs', aiming = Nothing } }
     _ ->
       model
 -- No-ops unless game is in planning mode
 updateChampActions : String -> List Action -> Model -> Model
 updateChampActions champName actions model =
   case model.mode of
-    Planning champs ->
+    Planning {champs} ->
       let
         champ =
           Util.forceUnwrap (Dict.get champName champs)
@@ -490,12 +674,31 @@ updateChampActions champName actions model =
         champs' =
           Dict.insert champName champ' champs
       in
-        { model | mode = Planning champs' }
+        { model | mode = Planning { champs = champs', aiming = Nothing } }
     _ ->
       model
 
 
 
+
+
+-- Convert tile's coords to real client pixels where (0, 0) is topleft of svg
+-- Let's us for example get angle from a tile to mouse position
+coordsToGlobalPx : Model -> Vector -> Vector
+coordsToGlobalPx model (coordX, coordY) =
+  let
+    (localX, localY) = coordsToLocalPx model (coordX, coordY)
+    (offsetX, offsetY) = (toFloat model.position.x, toFloat model.position.y)
+  in
+    ( localX + offsetX
+    , localY + offsetY
+    )
+
+coordsToLocalPx : Model -> Vector -> Vector
+coordsToLocalPx model (coordX, coordY) =
+  ( (coordX * Constants.tilesize + Constants.tilesize / 2) * model.scale
+  , (coordY * Constants.tilesize + Constants.tilesize / 2) * model.scale
+  )
 
 
 getPosition : Model -> Mouse.Position
@@ -532,7 +735,7 @@ view model =
             getPosition model
         , champs =
             case model.mode of
-              Planning champs ->
+              Planning {champs} ->
                 champs
               Simulating _ idx round ->
                 case Array.get idx round.ticks of
@@ -561,12 +764,58 @@ view model =
               _ ->
                 Nothing
         , onTileClick = TileClick
-        , onChampClick = ChampClick
-        , onWaypointClick = WaypointClick
+        -- Clicking a champ only does something if you aren't currently aiming
+        , onChampClick =
+            case model.mode of
+              Simulating _ _ _ ->
+                Just ChampClick
+              Planning {aiming} ->
+                case aiming of
+                  Nothing ->
+                    Just ChampClick
+                  _ ->
+                    Nothing
+          -- Clicking a waypoint only does something if you aren't currently aiming
+        , onWaypointClick =
+            case model.mode of
+              Simulating _ _ _ ->
+                Just WaypointClick
+              Planning {aiming} ->
+                case aiming of
+                  Nothing ->
+                    Just WaypointClick
+                  _ ->
+                    Nothing
         , onMouseDown =
             Html.Events.on "mousedown" (JD.map DragStart Mouse.position)
+        , onMouseMove =
+            -- Do nothing unless aiming
+            case model.mode of
+              Planning state ->
+                state.aiming
+                |> Maybe.map
+                    (always (Html.Events.on "mousemove"
+                              (JD.map MouseMove Mouse.position)))
+              _ ->
+                Nothing
+        , onAnyClick =
+            -- Do nothing unless aiming
+            case model.mode of
+              Planning state ->
+                state.aiming
+                |> Maybe.map (always (Html.Events.onClick ApplyAiming))
+              _ ->
+                Nothing
         , showCoords =
             model.showCoords
+        , aiming =
+            case model.mode of
+              Planning {aiming} ->
+                aiming
+              _ ->
+                Nothing
+        , coordsToLocalPx =
+            coordsToLocalPx model
         }
     in
       Grid.view ctx model.grid

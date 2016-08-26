@@ -19,7 +19,6 @@ import Vector exposing (Vector)
 
 -- FIXME: The code in this module is nasty.
 
-
 type Collision
   = Wall
   | Enemy Champ

@@ -11,6 +11,7 @@ import Class exposing (Class)
 import Action exposing (Action)
 
 
+-- Tells AllDict how to turn an Action into a key.
 ord : Action -> Int
 ord action =
   case action of
@@ -25,6 +26,7 @@ ord action =
       2
 
 
+-- Lets other modules query the cooldown duration of an action.
 duration : Action -> Int
 duration action =
   case action of
@@ -39,19 +41,21 @@ duration action =
       60
 
 
--- The value of each cooldown key is (Maybe currTick, totalTicks)
--- (Just currTick) means that the action is cooling down, Nothing means
--- it is ready to use. 60 ticks = 1 second
+-- The value of each cooldown key is (Maybe elaspedTicks, totalTicks)
+--   - (Just elapsed) means that the action is cooling down
+--   - Nothing means it is ready to use.
+-- 60 ticks = 1 second
 -- totalTicks == 0 can be used to establish that there is no cooldown for the act
+type alias Cooldown =
+  (Maybe Int, Int)
+
+
 type alias Cooldowns =
-  AllDict Action (Maybe Int, Int) Int
-  --Dict String (Maybe Int, Int)
+  AllDict Action Cooldown Int
 
 
--- REVISIT: Couldn't get this working using Actions as keys with AnyDict
--- since I can't just specify an action tag, rather I'd have to
--- construct an Action with dummy values which seems worse than
--- using strings like this so far.
+-- This looks weird because I needed to construct dummy Actions to
+-- too use my ord/duration functions.
 init : Class -> Cooldowns
 init class =
   let
@@ -73,34 +77,38 @@ init class =
     AllDict.fromList ord (List.append generalAbilities classAbilities)
 
 
+-- Cools down every ability in the dict by one tick
 tick : Cooldowns -> Cooldowns
 tick cooldowns =
   let
-    tick1 = \ability (maybePrevTick, totalTicks) ->
-      case maybePrevTick of
+    tick1 = \ability (maybe, totalTicks) ->
+      case maybe of
         Nothing ->
           -- Already cooled
           (Nothing, totalTicks)
-        Just prevTick ->
-          if prevTick == totalTicks then
+        Just elapsed ->
+          if elapsed == totalTicks then
             -- Just cooled
             (Nothing, totalTicks)
           else
             -- Still cooling
-            (Just (prevTick + 1), totalTicks)
+            (Just (elapsed + 1), totalTicks)
   in
     AllDict.map tick1 cooldowns
 
 
+-- Checks if an action is cooled down and ready to be used again.
 isCool : Cooldowns -> Action -> Bool
 isCool cooldowns action =
   case AllDict.get action cooldowns of
     Nothing ->
       False
-    Just (maybePrevTick, _) ->
-      maybePrevTick == Nothing
+    Just (maybe, _) ->
+      maybe == Nothing
 
 
+-- Begin cooling down an ability for its totalTicks duration.
+-- Use this any time a champ uses an ability.
 heatUp : Cooldowns -> Action -> Cooldowns
 heatUp cooldowns action =
   AllDict.update

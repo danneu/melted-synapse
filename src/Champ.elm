@@ -3,11 +3,11 @@
 module Champ exposing (..)
 
 
--- Elm
 import Svg exposing (..)
 import Svg.Attributes
 import Svg.Events
 import String
+import List.Extra
 -- 1st
 import Waypoint exposing (Waypoint)
 import Vector exposing (Vector)
@@ -183,14 +183,7 @@ statusToEmoji status =
         AutoAttacking _ _ ->
           "👊"
         Acting action ->
-          case action of
-            Action.Charge _ ->
-              "🚀"
-            Action.Snipe _ _ _ ->
-              "🎯"
-            Action.Wait _ ->
-              "⌛"
-
+          Action.toIcon action
 
 
 statusToSimpleName : Status -> String
@@ -216,7 +209,7 @@ statusToSimpleName status =
               "Waiting"
 
 
-viewWaypoint : Maybe Waypoint -> (Waypoint -> msg) -> Waypoint -> Svg msg
+viewWaypoint : Maybe Waypoint -> Maybe (Waypoint -> msg) -> Waypoint -> Svg msg
 viewWaypoint maybeWaypoint onWaypointClick waypoint =
   let
     (x, y) = waypoint.position
@@ -245,13 +238,21 @@ viewWaypoint maybeWaypoint onWaypointClick waypoint =
       else
         Svg.text' [] []
     , Svg.image
-      [ Svg.Attributes.x (toString (x * tilesize))
-      , Svg.Attributes.y (toString (y * tilesize))
-      , Svg.Attributes.width <| toString tilesize
-      , Svg.Attributes.height <| toString tilesize
-      , Svg.Attributes.xlinkHref "./img/waypoint.png"
-      , Svg.Events.onClick (onWaypointClick waypoint)
-      ]
+        ( List.concat
+            [ [ Svg.Attributes.x (toString (x * tilesize))
+              , Svg.Attributes.y (toString (y * tilesize))
+              , Svg.Attributes.width <| toString tilesize
+              , Svg.Attributes.height <| toString tilesize
+              , Svg.Attributes.xlinkHref "./img/waypoint.png"
+              ]
+            , (case onWaypointClick of
+                Nothing ->
+                  []
+                Just fn ->
+                  [Svg.Events.onClick (fn waypoint)]
+                 )
+            ]
+        )
       []
     , if List.isEmpty waypoint.actions then
         Svg.text' [] []
@@ -436,14 +437,21 @@ view ctx champ =
 
             in
               Svg.image
-              [ Svg.Attributes.x (toString x')
-              , Svg.Attributes.y (toString y')
-              , Svg.Attributes.width <| toString side
-              , Svg.Attributes.height <| toString side
-              , Svg.Attributes.xlinkHref imageSrc
-              , Svg.Attributes.transform transform
-              , Svg.Events.onClick (ctx.onChampClick champ)
-              ]
+                ( List.concat
+                    [ [ Svg.Attributes.x (toString x')
+                      , Svg.Attributes.y (toString y')
+                      , Svg.Attributes.width <| toString side
+                      , Svg.Attributes.height <| toString side
+                      , Svg.Attributes.xlinkHref imageSrc
+                      , Svg.Attributes.transform transform
+                      ]
+                    , case ctx.onChampClick of
+                        Nothing ->
+                          []
+                        Just fn ->
+                          [Svg.Events.onClick (fn champ)]
+                    ]
+                )
               []
           -- Show action count enqueued on the champ itself
           , if List.isEmpty champ.actions then
@@ -532,19 +540,26 @@ view ctx champ =
               ]
           ]
           -- Draw waypoints
-        , ( List.map
-              (viewWaypoint ctx.selectedWaypoint (ctx.onWaypointClick champ))
+        , let
+            onWaypointClick =
+              ctx.onWaypointClick
+              |> Maybe.map (\event -> event champ)
+          in
+            ( List.map
+              (viewWaypoint ctx.selectedWaypoint onWaypointClick)
               champ.waypoints
-          )
+            )
           -- Draw arrow
         , [viewArrow champ]
         ]
       )
 
 
+-- champs and waypoints should only register clicks if user isn't currently
+-- trying to aim an ability
 type alias Context msg =
-  { onChampClick : (Champ -> msg)
-  , onWaypointClick : (Champ -> Waypoint -> msg)
+  { onChampClick : Maybe (Champ -> msg)
+  , onWaypointClick : Maybe (Champ -> Waypoint -> msg)
   , selectedChamp : Maybe Champ
   , selectedWaypoint : Maybe Waypoint
   , tickIdx : Int

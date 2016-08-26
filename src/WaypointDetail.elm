@@ -14,6 +14,7 @@ import Champ exposing (Champ)
 import Class
 import Action exposing (Action)
 import Vector exposing (Vector)
+import Aiming
 
 
 -- FIXME: Messy
@@ -47,12 +48,14 @@ type OutMsg
   -- champName and waypoint position allow us to find a unqiue waypoint
   = UpdateWaypointActions String Vector (List Action)
   | UpdateChampActions String (List Action)
+  | UpdateAiming (Maybe Aiming.Aiming)
 
 
 type Msg
   = AddAction Action
   | RemoveAction Int -- Int is index
   | ClearActions
+  | StartAiming Float Action ((Aiming.Candidate, Action) -> Action) -- angle
 
 
 -- FIXME: NASTY
@@ -120,6 +123,22 @@ update msg ({champ} as model) =
             ( { model | waypoint = waypoint' }
             , UpdateWaypointActions champ.name waypoint.position actions'
             )
+    StartAiming angle action update ->
+      let
+        origin =
+          model.waypoint
+          |> Maybe.map .position
+          |> Maybe.withDefault model.champ.position
+        aiming =
+          ( Just { mode = Aiming.New
+                 , candidate = Aiming.Ray angle
+                 , origin = origin
+                 , action = action
+                 , update = update
+                 }
+          )
+      in
+        (model, UpdateAiming aiming)
 
 
 -- VIEW
@@ -227,20 +246,18 @@ view ({champ} as model) =
       else
         Html.li
         []
-        [ Html.text "🚀 Charge: "
-        , Html.br [] []
-        , Html.button
-          [ Html.Events.onClick (AddAction (Action.Charge (degrees 180))) ]
-          [ Html.text "←" ]
-        , Html.button
-          [ Html.Events.onClick (AddAction (Action.Charge (degrees 270))) ]
-          [ Html.text "↑" ]
-        , Html.button
-          [ Html.Events.onClick (AddAction (Action.Charge (degrees 90))) ]
-          [ Html.text "↓" ]
-        , Html.button
-          [ Html.Events.onClick (AddAction (Action.Charge (degrees 0))) ]
-          [ Html.text "→" ]
+        [ Html.button
+          [ let
+              update = \ (candidate, action) ->
+                case candidate of
+                  Aiming.Ray angle ->
+                    Action.Charge angle
+            in
+              Html.Events.onClick
+                (StartAiming 0 (Action.Charge 0) update)
+          ]
+          [ Html.text "🚀 Charge"
+          ]
         ]
       -- RANGER
     , if champ.class /= Class.Ranger then

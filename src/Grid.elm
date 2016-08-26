@@ -17,6 +17,8 @@ import Tile exposing (Tile)
 import Waypoint exposing (Waypoint)
 import Champ exposing (Champ)
 import Constants exposing (tilesize)
+import Aiming
+import Vector exposing (Vector)
 
 
 type alias Grid =
@@ -99,24 +101,46 @@ view ctx grid =
     , ctx.onMouseDown
     ]
     [ Svg.g
-      [ transform ]
-      ( List.append
-          (List.indexedMap (viewRow ctx) (Array.toList grid))
-          ( let
-              champCtx =
-              { onChampClick = ctx.onChampClick
-              , onWaypointClick = ctx.onWaypointClick
-              , selectedChamp = ctx.selectedChamp
-              , selectedWaypoint = ctx.selectedWaypoint
-              , tickIdx = ctx.tickIdx
-              }
-            in
-              ( List.map
-                (Champ.view champCtx)
-                -- Sort the dead champs first so they render behind alive champs
-                (Champ.sortDeadFirst (Dict.values ctx.champs))
-              )
-          )
+      ( List.concat
+          [ [ transform ]
+          , ( case ctx.onMouseMove of
+                Nothing ->
+                  []
+                Just attr ->
+                  [attr]
+            )
+          , ( case ctx.onAnyClick of
+                Nothing ->
+                  []
+                Just attr ->
+                  [attr]
+            )
+          ]
+      )
+      ( List.concat
+          [ (List.indexedMap (viewRow ctx) (Array.toList grid))
+          , ( let
+                champCtx =
+                { onChampClick = ctx.onChampClick
+                , onWaypointClick = ctx.onWaypointClick
+                , selectedChamp = ctx.selectedChamp
+                , selectedWaypoint = ctx.selectedWaypoint
+                , tickIdx = ctx.tickIdx
+                }
+              in
+                ( List.map
+                  (Champ.view champCtx)
+                  -- Sort the dead champs first so they render behind alive champs
+                  (Champ.sortDeadFirst (Dict.values ctx.champs))
+                )
+            )
+          , ( case ctx.aiming of
+                Nothing ->
+                  []
+                Just aiming ->
+                  [Aiming.view (ctx.coordsToLocalPx aiming.origin) aiming]
+            )
+          ]
       )
     ]
 
@@ -124,9 +148,11 @@ view ctx grid =
 
 type alias Context msg =
   { onTileClick : (Int -> Int -> msg)
-  , onChampClick : (Champ -> msg)
-  , onWaypointClick : (Champ -> Waypoint -> msg)
+  , onChampClick : Maybe (Champ -> msg)
+  , onWaypointClick : Maybe (Champ -> Waypoint -> msg)
   , onMouseDown : Html.Attribute msg
+  , onMouseMove : Maybe (Html.Attribute msg)
+  , onAnyClick : Maybe (Html.Attribute msg)
   , offset : Mouse.Position
   , rows : Int
   , cols : Int
@@ -136,4 +162,6 @@ type alias Context msg =
   , selectedWaypoint : Maybe Waypoint
   , showCoords : Bool
   , tickIdx : Int
+  , aiming : Maybe Aiming.Aiming
+  , coordsToLocalPx : Vector -> Vector
   }
