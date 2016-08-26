@@ -288,15 +288,40 @@ viewArrow champ =
           String.join " " (List.map toString [degrees, originX, originY]) ++
           ")"
       in
-        Svg.image
-          [ Svg.Attributes.x (toString (x * tilesize))
-          , Svg.Attributes.y (toString (y * tilesize))
-          , Svg.Attributes.width (toString tilesize)
-          , Svg.Attributes.height (toString tilesize)
-          , Svg.Attributes.xlinkHref "./img/arrow1.png"
-          , Svg.Attributes.transform transform
-          ]
-          []
+        Svg.g
+        []
+        [ -- Line to the shooting champ
+          -- Only show the trail if the arrow is in map bounds since
+          -- we currently hack it so that the arrow is moved out of bounds
+          -- once it hits something to avoid future collisions
+          if x < 0 && y < 0 then
+            Svg.text ""
+          else
+            let
+              (champX, champY) =
+                champ.position
+            in
+              Svg.line
+              [ Svg.Attributes.x1 (toString originX)
+              , Svg.Attributes.y1 (toString originY)
+              , Svg.Attributes.x2 (toString (champX * tilesize + tilesize / 2))
+              , Svg.Attributes.y2 (toString (champY * tilesize + tilesize / 2))
+              , Svg.Attributes.stroke "yellow"
+              , Svg.Attributes.strokeDasharray "5, 5"
+              , Svg.Attributes.strokeWidth "5"
+              ]
+              []
+            -- Arrow graphic
+          , Svg.image
+            [ Svg.Attributes.x (toString (x * tilesize))
+            , Svg.Attributes.y (toString (y * tilesize))
+            , Svg.Attributes.width (toString tilesize)
+            , Svg.Attributes.height (toString tilesize)
+            , Svg.Attributes.xlinkHref "./img/arrow1.png"
+            , Svg.Attributes.transform transform
+            ]
+            []
+        ]
     _ ->
       -- No arrow to render
       Svg.text' [] []
