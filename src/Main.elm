@@ -121,8 +121,7 @@ init =
     , cols = cols
     , position = Mouse.Position 50 50
     , drag = Nothing
-    --, scale = 0.80
-    , scale = 1
+    , scale = 0.80
     , mode = Planning { champs = champs, aiming = Nothing }
     , keyboard = kbModel
     , selection = None
