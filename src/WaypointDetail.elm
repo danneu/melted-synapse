@@ -213,7 +213,15 @@ view ({champ} as model) =
           [ Html.text (toString currHp ++ " / " ++ toString maxHp ++ " hp")
           ]
         ]
-  , Html.h3 [] [ Html.text "Actions" ]
+  , Html.h3
+    []
+    [ Html.text "Actions "
+    , Html.button
+      [ Html.Attributes.class "btn btn-danger btn-xs"
+      , Html.Events.onClick ClearActions
+      ]
+      [ Html.text "Clear" ]
+    ]
   , if List.isEmpty actions then
       Html.text "-- No Actions --"
     else
