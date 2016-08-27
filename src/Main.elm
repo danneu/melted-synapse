@@ -689,14 +689,14 @@ coordsToGlobalPx model (coordX, coordY) =
     (localX, localY) = coordsToLocalPx model (coordX, coordY)
     (offsetX, offsetY) = (toFloat model.position.x, toFloat model.position.y)
   in
-    ( localX + offsetX
-    , localY + offsetY
+    ( localX * model.scale + offsetX
+    , localY * model.scale + offsetY
     )
 
 coordsToLocalPx : Model -> Vector -> Vector
 coordsToLocalPx model (coordX, coordY) =
-  ( (coordX * Constants.tilesize + Constants.tilesize / 2) * model.scale
-  , (coordY * Constants.tilesize + Constants.tilesize / 2) * model.scale
+  ( coordX * Constants.tilesize + Constants.tilesize / 2
+  , coordY * Constants.tilesize + Constants.tilesize / 2
   )
 
 
